@@ -1,50 +1,91 @@
-import { LogIn, LogOut, ShieldCheck, UserPlus } from "lucide-react";
+import { connection } from "next/server";
+import { ChevronRight, LogIn, LogOut, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { Suspense, type ReactNode } from "react";
 import { logout } from "@/app/foro/actions";
 import { getCurrentUser } from "@/lib/auth";
+import Avatar from "./Avatar";
 
-/** Barra con el estado de la sesión. Lee cookies: úsala siempre dentro de <Suspense>. */
-export default async function ForumBar() {
-  const user = await getCurrentUser();
+type Crumb = { label: string; href?: string };
+
+/** Fila superior del hero del foro: ruta a la izquierda y sesión del usuario a la derecha. */
+export default function ForumBar({ crumbs = [] }: { crumbs?: Crumb[] }) {
+  const all: Crumb[] = [{ label: "Inicio", href: "/" }, { label: "Foro", href: "/foro" }, ...crumbs];
 
   return (
-    <div className="border-b border-black/5 bg-white">
-      <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-3 text-[12px] lg:px-8">
-        <nav aria-label="Ruta" className="flex items-center gap-2 font-semibold text-ink/60">
-          <Link href="/" className="hover:text-brand">Inicio</Link>
-          <span>/</span>
-          <Link href="/foro" className="text-forest-dark hover:text-brand">Foro</Link>
-        </nav>
-
-        {user ? (
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 font-semibold text-forest-dark">
-              {user.role === "admin" && <ShieldCheck className="h-4 w-4 text-brand" />}
-              Hola, {user.name}
+    <div className="mx-auto flex min-h-[56px] max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-2.5 text-[12px] lg:px-8">
+      <nav aria-label="Ruta" className="flex min-w-0 items-center gap-1.5 font-medium text-white/60">
+        {all.map((c, i) => {
+          const last = i === all.length - 1;
+          return (
+            <span key={`${c.label}-${i}`} className="flex min-w-0 items-center gap-1.5">
+              {i > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/30" />}
+              {c.href && !last ? (
+                <Link href={c.href} className="transition hover:text-lime">
+                  {c.label}
+                </Link>
+              ) : (
+                <span className="truncate font-semibold text-white">{c.label}</span>
+              )}
             </span>
-            <form action={logout}>
-              <button className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 font-semibold text-ink/70 transition hover:border-brand hover:text-brand">
-                <LogOut className="h-3.5 w-3.5" /> Salir
-              </button>
-            </form>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Link
-              href="/foro/ingresar"
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 font-semibold text-forest-dark transition hover:border-brand hover:text-brand"
-            >
-              <LogIn className="h-3.5 w-3.5" /> Ingresar
-            </Link>
-            <Link
-              href="/foro/registro"
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 font-bold text-white transition hover:bg-brand-dark"
-            >
-              <UserPlus className="h-3.5 w-3.5" /> Crear cuenta
-            </Link>
-          </div>
-        )}
+          );
+        })}
+      </nav>
+
+      <Suspense fallback={<div className="h-9 w-48 animate-pulse rounded-full bg-white/10" />}>
+        <Session />
+      </Suspense>
+    </div>
+  );
+}
+
+function Pill({ children, href, solid }: { children: ReactNode; href: string; solid?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 font-bold transition ${
+        solid ? "bg-brand text-white hover:bg-brand-dark" : "border border-white/25 text-white hover:border-lime hover:text-lime"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+/** Lee la cookie de sesión: por eso va dentro de <Suspense>. */
+async function Session() {
+  await connection();
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2">
+        <Pill href="/foro/ingresar">
+          <LogIn className="h-3.5 w-3.5" /> Ingresar
+        </Pill>
+        <Pill href="/foro/registro" solid>
+          <UserPlus className="h-3.5 w-3.5" /> Crear cuenta
+        </Pill>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3 rounded-full bg-white/10 py-1 pl-1 pr-1.5 backdrop-blur">
+      <Avatar name={user.name} role={user.role} size="sm" />
+      <span className="leading-tight">
+        <span className="block font-bold text-white">{user.name}</span>
+        <span className="block text-[10px] text-white/60">{user.role === "admin" ? "Administrador" : "Miembro"}</span>
+      </span>
+      <form action={logout}>
+        <button
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/15 hover:text-white"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
+      </form>
     </div>
   );
 }

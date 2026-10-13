@@ -1,20 +1,23 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, Reply, User } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useRef, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { createAnswer, createQuestion, login, register, type FormState } from "@/app/foro/actions";
+import Avatar from "./Avatar";
 
 const input =
-  "w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink/40 focus:border-brand focus:ring-2 focus:ring-brand/20";
+  "w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink/40 focus:border-brand focus:ring-4 focus:ring-brand/15";
 const label = "mb-1.5 block text-[12px] font-bold text-forest-dark";
 
-function Submit({ pending, children }: { pending: boolean; children: ReactNode }) {
+function Submit({ pending, children, full }: { pending: boolean; children: ReactNode; full?: boolean }) {
   return (
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-7 py-3 text-sm font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark disabled:opacity-60"
+      className={`inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-7 py-3.5 text-[14px] font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark disabled:opacity-60 ${
+        full ? "w-full" : ""
+      }`}
     >
       {pending && <Loader2 className="h-4 w-4 animate-spin" />}
       {children}
@@ -25,9 +28,19 @@ function Submit({ pending, children }: { pending: boolean; children: ReactNode }
 function ErrorMsg({ error }: { error?: string }) {
   if (!error) return null;
   return (
-    <p role="alert" className="rounded-lg bg-red-50 px-4 py-2.5 text-[13px] font-medium text-red-700">
+    <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700">
       {error}
     </p>
+  );
+}
+
+/** Campo con ícono a la izquierda. */
+function IconField({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink/40 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
+      {children}
+    </div>
   );
 }
 
@@ -37,50 +50,63 @@ const initial: FormState = {};
 
 export function AuthForm({ mode, next }: { mode: "login" | "register"; next: string }) {
   const [state, action, pending] = useActionState(mode === "login" ? login : register, initial);
+  const [show, setShow] = useState(false);
   const isLogin = mode === "login";
 
   return (
-    <form action={action} className="space-y-4 rounded-3xl bg-white p-6 shadow-xl sm:p-8">
-      <h2 className="text-2xl font-extrabold text-forest-dark">{isLogin ? "Ingresa a tu cuenta" : "Crea tu cuenta"}</h2>
-      <p className="text-[13px] text-ink/60">
-        {isLogin ? "Para preguntar y responder en el foro." : "Es gratis y toma menos de un minuto."}
-      </p>
+    <form action={action} className="space-y-4">
       <input type="hidden" name="next" value={next} />
 
       {!isLogin && (
         <div>
-          <label htmlFor="name" className={label}>Nombre</label>
-          <input id="name" name="name" required minLength={2} maxLength={60} autoComplete="name" className={input} />
+          <label htmlFor="name" className={label}>Nombre completo</label>
+          <IconField icon={<User />}>
+            <input id="name" name="name" required minLength={2} maxLength={60} autoComplete="name" placeholder="Tu nombre" className={`${input} pl-11`} />
+          </IconField>
         </div>
       )}
       <div>
         <label htmlFor="email" className={label}>Correo electrónico</label>
-        <input id="email" name="email" type="email" required autoComplete="email" className={input} />
+        <IconField icon={<Mail />}>
+          <input id="email" name="email" type="email" required autoComplete="email" placeholder="tucorreo@empresa.com" className={`${input} pl-11`} />
+        </IconField>
       </div>
       <div>
         <label htmlFor="password" className={label}>Contraseña</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={isLogin ? 1 : 8}
-          autoComplete={isLogin ? "current-password" : "new-password"}
-          placeholder={isLogin ? "" : "Mínimo 8 caracteres"}
-          className={input}
-        />
+        <IconField icon={<Lock />}>
+          <input
+            id="password"
+            name="password"
+            type={show ? "text" : "password"}
+            required
+            minLength={isLogin ? 1 : 8}
+            autoComplete={isLogin ? "current-password" : "new-password"}
+            placeholder={isLogin ? "Tu contraseña" : "Mínimo 8 caracteres"}
+            className={`${input} pl-11 pr-12`}
+          />
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-ink/45 transition hover:bg-mist hover:text-forest"
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </IconField>
       </div>
 
       <ErrorMsg error={state.error} />
-      <Submit pending={pending}>{isLogin ? "Ingresar" : "Crear cuenta"}</Submit>
+      <Submit pending={pending} full>
+        {isLogin ? "Ingresar" : "Crear cuenta"}
+      </Submit>
 
-      <p className="text-[13px] text-ink/60">
+      <p className="text-center text-[13px] text-ink/60">
         {isLogin ? "¿Aún no tienes cuenta? " : "¿Ya tienes cuenta? "}
         <Link
           href={`${isLogin ? "/foro/registro" : "/foro/ingresar"}?next=${encodeURIComponent(next)}`}
           className="font-bold text-brand-dark hover:underline"
         >
-          {isLogin ? "Regístrate" : "Ingresa"}
+          {isLogin ? "Regístrate gratis" : "Ingresa"}
         </Link>
       </p>
     </form>
@@ -91,52 +117,81 @@ export function AuthForm({ mode, next }: { mode: "login" | "register"; next: str
 
 export function QuestionForm({ categories }: { categories: readonly { slug: string; label: string }[] }) {
   const [state, action, pending] = useActionState(createQuestion, initial);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
 
   return (
-    <form action={action} className="space-y-4 rounded-3xl bg-white p-6 shadow-xl sm:p-8">
+    <form action={action} className="space-y-5 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
       <div>
-        <label htmlFor="category" className={label}>Categoría</label>
-        <select id="category" name="category" required defaultValue="" className={input}>
-          <option value="" disabled>Elige una categoría</option>
-          {categories.map((c) => (
-            <option key={c.slug} value={c.slug}>{c.label}</option>
+        <label className={label}>Categoría</label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {categories.map((c, i) => (
+            <label key={c.slug} className="cursor-pointer">
+              <input type="radio" name="category" value={c.slug} required={i === 0} className="peer sr-only" />
+              <span className="block rounded-xl border border-black/10 px-3 py-2.5 text-center text-[12px] font-semibold text-ink/70 transition peer-checked:border-brand peer-checked:bg-brand/10 peer-checked:text-brand-dark peer-focus-visible:ring-4 peer-focus-visible:ring-brand/20 hover:border-brand/50">
+                {c.label}
+              </span>
+            </label>
           ))}
-        </select>
+        </div>
       </div>
       <div>
-        <label htmlFor="title" className={label}>Título de tu pregunta</label>
+        <div className="flex items-end justify-between">
+          <label htmlFor="title" className={label}>Título de tu pregunta</label>
+          <span className={`mb-1.5 text-[11px] ${title.length > 150 ? "text-red-600" : "text-ink/40"}`}>{title.length}/150</span>
+        </div>
         <input
           id="title"
           name="title"
           required
           minLength={10}
           maxLength={150}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="Ej: ¿Qué estiba necesito para exportar maquinaria de 2 toneladas?"
           className={input}
         />
       </div>
       <div>
-        <label htmlFor="body" className={label}>Detalles</label>
+        <div className="flex items-end justify-between">
+          <label htmlFor="body" className={label}>Detalles</label>
+          <span className="mb-1.5 text-[11px] text-ink/40">{body.length}/5000</span>
+        </div>
         <textarea
           id="body"
           name="body"
           required
           minLength={20}
           maxLength={5000}
-          rows={7}
+          rows={8}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
           placeholder="Cuéntanos medidas, peso, destino y cualquier detalle que ayude a responderte."
-          className={`${input} resize-y`}
+          className={`${input} resize-y leading-relaxed`}
         />
       </div>
       <ErrorMsg error={state.error} />
-      <Submit pending={pending}>Publicar pregunta</Submit>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-5">
+        <Link href="/foro" className="text-[13px] font-semibold text-ink/55 hover:text-forest">
+          Cancelar
+        </Link>
+        <Submit pending={pending}>Publicar pregunta</Submit>
+      </div>
     </form>
   );
 }
 
 /* ---------- responder ---------- */
 
-export function AnswerForm({ questionId }: { questionId: number }) {
+export function AnswerForm({
+  questionId,
+  userName,
+  userRole,
+}: {
+  questionId: number;
+  userName: string;
+  userRole: "user" | "admin";
+}) {
   const [state, action, pending] = useActionState(createAnswer.bind(null, questionId), initial);
   const ref = useRef<HTMLFormElement>(null);
 
@@ -146,8 +201,13 @@ export function AnswerForm({ questionId }: { questionId: number }) {
   }, [state.ok]);
 
   return (
-    <form ref={ref} action={action} className="space-y-3 rounded-2xl bg-white p-5 shadow-md">
-      <label htmlFor="answer" className={label}>Tu respuesta</label>
+    <form ref={ref} action={action} className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex items-center gap-3">
+        <Avatar name={userName} role={userRole} size="sm" />
+        <label htmlFor="answer" className="text-[14px] font-extrabold text-forest-dark">
+          Escribe tu respuesta
+        </label>
+      </div>
       <textarea
         id="answer"
         name="body"
@@ -155,11 +215,87 @@ export function AnswerForm({ questionId }: { questionId: number }) {
         minLength={5}
         maxLength={5000}
         rows={5}
-        placeholder="Comparte lo que sabes…"
-        className={`${input} resize-y`}
+        placeholder="Comparte lo que sabes: medidas, materiales, normas…"
+        className={`${input} mt-4 resize-y leading-relaxed`}
       />
-      <ErrorMsg error={state.error} />
-      <Submit pending={pending}>Publicar respuesta</Submit>
+      <div className="mt-3 space-y-3">
+        <ErrorMsg error={state.error} />
+        <div className="flex justify-end">
+          <Submit pending={pending}>Publicar respuesta</Submit>
+        </div>
+      </div>
     </form>
+  );
+}
+
+/* ---------- responder a un comentario ---------- */
+
+export function ReplyBox({
+  questionId,
+  parentId,
+  parentAuthor,
+  loggedIn,
+  next,
+}: {
+  questionId: number;
+  parentId: number;
+  parentAuthor: string;
+  loggedIn: boolean;
+  next: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [state, action, pending] = useActionState(createAnswer.bind(null, questionId), initial);
+  const ref = useRef<HTMLFormElement>(null);
+
+  // Al publicar con éxito se limpia y se cierra.
+  useEffect(() => {
+    if (state.ok) {
+      ref.current?.reset();
+      setOpen(false);
+    }
+  }, [state.ok]);
+
+  const button = "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-ink/55 transition hover:bg-brand/10 hover:text-brand-dark";
+
+  if (!loggedIn) {
+    return (
+      <Link href={`/foro/ingresar?next=${next}`} className={button} title="Ingresa para responder">
+        <Reply className="h-4 w-4" /> Responder
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={button}>
+        <Reply className="h-4 w-4" /> {open ? "Cancelar" : "Responder"}
+      </button>
+      {open && (
+        <form ref={ref} action={action} className="order-last mt-3 w-full space-y-3 rounded-2xl bg-mist p-3">
+          <input type="hidden" name="parent_id" value={parentId} />
+          <textarea
+            name="body"
+            required
+            minLength={5}
+            maxLength={5000}
+            rows={3}
+            autoFocus
+            placeholder={`Responde a ${parentAuthor}…`}
+            className={`${input} resize-y leading-relaxed`}
+          />
+          <ErrorMsg error={state.error} />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-ink/60 hover:text-forest"
+            >
+              Cancelar
+            </button>
+            <Submit pending={pending}>Responder</Submit>
+          </div>
+        </form>
+      )}
+    </>
   );
 }

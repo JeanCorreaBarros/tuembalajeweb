@@ -8,53 +8,7 @@ import path from "node:path";
  * Cambia la ruta con la variable DATABASE_PATH. Haz respaldo copiando ese archivo.
  */
 const DB_PATH = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "foro.db");
-
-const SCHEMA = `
-CREATE TABLE IF NOT EXISTS users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT    NOT NULL,
-  email         TEXT    NOT NULL UNIQUE,
-  password_hash TEXT    NOT NULL,
-  role          TEXT    NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
-  created_at    INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS sessions (
-  token_hash TEXT    PRIMARY KEY,
-  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  expires_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS questions (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  category    TEXT    NOT NULL,
-  title       TEXT    NOT NULL,
-  body        TEXT    NOT NULL,
-  views       INTEGER NOT NULL DEFAULT 0,
-  accepted_id INTEGER,
-  created_at  INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS answers (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body        TEXT    NOT NULL,
-  created_at  INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS votes (
-  answer_id INTEGER NOT NULL REFERENCES answers(id) ON DELETE CASCADE,
-  user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  PRIMARY KEY (answer_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_questions_created  ON questions(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_questions_category ON questions(category);
-CREATE INDEX IF NOT EXISTS idx_answers_question   ON answers(question_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_expires   ON sessions(expires_at);
-`;
+const SCHEMA_PATH = path.join(process.cwd(), "src", "lib", "schema.sql");
 
 const g = globalThis as unknown as { __foroDb?: Database.Database };
 
@@ -63,8 +17,18 @@ function open() {
   const db = new Database(DB_PATH);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
-  db.exec(SCHEMA);
+  db.exec(fs.readFileSync(SCHEMA_PATH, "utf8"));
+  migrate(db);
   return db;
+}
+
+/** Cambios de esquema para bases creadas con versiones anteriores (no borran datos). */
+function migrate(db: Database.Database) {
+  const cols = db.prepare("PRAGMA table_info(answers)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "parent_id")) {
+    db.exec("ALTER TABLE answers ADD COLUMN parent_id INTEGER REFERENCES answers(id) ON DELETE CASCADE");
+  }
+  db.exec("CREATE INDEX IF NOT EXISTS idx_answers_parent ON answers(parent_id)");
 }
 
 /** Una sola conexión por proceso (también sobrevive al hot reload en desarrollo). */

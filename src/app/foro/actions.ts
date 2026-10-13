@@ -115,8 +115,19 @@ export async function createAnswer(questionId: number, _: FormState, fd: FormDat
   if (!db.prepare("SELECT 1 FROM questions WHERE id = ?").get(questionId)) return { error: "La pregunta ya no existe." };
   if (recentPosts(user.id) >= 5) return { error: "Estás publicando muy rápido. Espera un minuto." };
 
-  db.prepare("INSERT INTO answers (question_id, user_id, body, created_at) VALUES (?, ?, ?, ?)").run(
+  // Si responde a un comentario, este debe existir y ser de la misma pregunta.
+  const rawParent = str(fd, "parent_id");
+  const parentId = /^\d+$/.test(rawParent) ? Number(rawParent) : null;
+  if (parentId !== null) {
+    const parent = db.prepare("SELECT question_id FROM answers WHERE id = ?").get(parentId) as
+      | { question_id: number }
+      | undefined;
+    if (!parent || parent.question_id !== questionId) return { error: "El comentario al que respondes ya no existe." };
+  }
+
+  db.prepare("INSERT INTO answers (question_id, parent_id, user_id, body, created_at) VALUES (?, ?, ?, ?, ?)").run(
     questionId,
+    parentId,
     user.id,
     body,
     Date.now(),
@@ -142,11 +153,12 @@ export async function acceptAnswer(answerId: number) {
   const user = await requireUser();
   const row = db
     .prepare(
-      `SELECT q.id AS qid, q.user_id AS owner, q.accepted_id
+      `SELECT q.id AS qid, q.user_id AS owner, q.accepted_id, a.parent_id
          FROM answers a JOIN questions q ON q.id = a.question_id WHERE a.id = ?`,
     )
-    .get(answerId) as { qid: number; owner: number; accepted_id: number | null } | undefined;
-  if (!row || (row.owner !== user.id && user.role !== "admin")) return;
+    .get(answerId) as { qid: number; owner: number; accepted_id: number | null; parent_id: number | null } | undefined;
+  // Solo una respuesta directa (no un comentario a otra respuesta) puede ser la solución.
+  if (!row || row.parent_id !== null || (row.owner !== user.id && user.role !== "admin")) return;
 
   db.prepare("UPDATE questions SET accepted_id = ? WHERE id = ?").run(
     row.accepted_id === answerId ? null : answerId,
@@ -174,7 +186,7 @@ export async function deleteAnswer(id: number) {
   if (!a || (a.user_id !== user.id && user.role !== "admin")) return;
 
   db.prepare("UPDATE questions SET accepted_id = NULL WHERE accepted_id = ?").run(id);
-  db.prepare("DELETE FROM answers WHERE id = ?").run(id);
+  db.prepare("DELETE FROM answers WHERE id = ?").run(id); // sus respuestas se borran en cascada
   revalidatePath(`/foro/${a.question_id}`);
   revalidatePath("/foro");
 }

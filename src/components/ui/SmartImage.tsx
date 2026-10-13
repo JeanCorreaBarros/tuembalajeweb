@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -20,8 +21,9 @@ export default function SmartImage({ src, alt, className = "", priority, sizes =
       <div
         role="img"
         aria-label={alt}
-        className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-forest-mid/70 via-forest to-forest-dark p-2 text-center text-[10px] font-medium tracking-wide text-white/40 ${className}`}
+        className={`absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[#8a978f]/10 p-2 text-center text-[10px] font-medium tracking-wide text-[#8a978f] ${className}`}
       >
+        <ImageIcon className="h-5 w-5 opacity-70" />
         {src.replace("/images/", "")}
       </div>
     );

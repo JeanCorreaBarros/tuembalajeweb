@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
-import ForumBar from "@/components/foro/ForumBar";
 
 export const metadata: Metadata = {
   title: "Foro de preguntas y respuestas | Tu Embalaje",
@@ -14,12 +13,8 @@ export default function ForoLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Navbar solid />
-      <main className="min-h-[70vh] bg-mist/60 pt-[72px]">
-        <Suspense fallback={<div className="h-[49px] border-b border-black/5 bg-white" />}>
-          <ForumBar />
-        </Suspense>
-        {children}
-      </main>
+      {/* El menú fijo mide 85px: el contenido empieza justo debajo. */}
+      <main className="min-h-[70vh] bg-[#f4f6f4] pt-[85px]">{children}</main>
       <Footer />
     </>
   );

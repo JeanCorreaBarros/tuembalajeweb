@@ -37,9 +37,20 @@ const QUESTION_SELECT = `
 
 const likeEscape = (s: string) => s.replace(/[\\%_]/g, (m) => `\\${m}`);
 
-export function listQuestions(opts: { q?: string; category?: string; page: number }) {
+export const VIEWS = [
+  { slug: "recientes", label: "Recientes" },
+  { slug: "populares", label: "Populares" },
+  { slug: "sin-respuesta", label: "Sin respuesta" },
+  { slug: "resueltas", label: "Resueltas" },
+] as const;
+export type View = (typeof VIEWS)[number]["slug"];
+export const isView = (v: string): v is View => VIEWS.some((x) => x.slug === v);
+
+export function listQuestions(opts: { q?: string; category?: string; view?: View; page: number }) {
   const where: string[] = [];
   const args: (string | number)[] = [];
+  if (opts.view === "sin-respuesta") where.push("NOT EXISTS (SELECT 1 FROM answers a WHERE a.question_id = q.id)");
+  if (opts.view === "resueltas") where.push("q.accepted_id IS NOT NULL");
   if (opts.q) {
     const like = `%${likeEscape(opts.q)}%`;
     where.push("(q.title LIKE ? ESCAPE '\\' OR q.body LIKE ? ESCAPE '\\')");
@@ -55,7 +66,11 @@ export function listQuestions(opts: { q?: string; category?: string; page: numbe
     db.prepare(`SELECT COUNT(*) AS n FROM questions q ${w}`).get(...args) as { n: number }
   ).n;
   const rows = db
-    .prepare(`${QUESTION_SELECT} ${w} ORDER BY q.created_at DESC LIMIT ? OFFSET ?`)
+    .prepare(
+      `${QUESTION_SELECT} ${w} ORDER BY ${
+        opts.view === "populares" ? "answers * 5 + q.views DESC, q.created_at DESC" : "q.created_at DESC"
+      } LIMIT ? OFFSET ?`,
+    )
     .all(...args, PAGE_SIZE, (opts.page - 1) * PAGE_SIZE) as QuestionRow[];
 
   return { rows, total, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
@@ -71,6 +86,7 @@ export function addView(id: number) {
 
 export type AnswerRow = {
   id: number;
+  parent_id: number | null;
   body: string;
   created_at: number;
   author_id: number;
@@ -83,7 +99,7 @@ export type AnswerRow = {
 export function listAnswers(questionId: number, viewerId: number | null) {
   return db
     .prepare(
-      `SELECT a.id, a.body, a.created_at, u.id AS author_id, u.name AS author, u.role AS author_role,
+      `SELECT a.id, a.parent_id, a.body, a.created_at, u.id AS author_id, u.name AS author, u.role AS author_role,
               (SELECT COUNT(*) FROM votes v WHERE v.answer_id = a.id) AS votes,
               (SELECT COUNT(*) FROM votes v WHERE v.answer_id = a.id AND v.user_id = ?) AS voted
          FROM answers a JOIN users u ON u.id = a.user_id
@@ -101,6 +117,36 @@ export function stats() {
               (SELECT COUNT(*) FROM users)     AS members`,
     )
     .get() as { questions: number; answers: number; members: number };
+}
+
+/** Número de preguntas por categoría (para la barra lateral). */
+export function categoryCounts() {
+  const rows = db.prepare("SELECT category, COUNT(*) AS n FROM questions GROUP BY category").all() as {
+    category: string;
+    n: number;
+  }[];
+  return Object.fromEntries(rows.map((r) => [r.category, r.n])) as Record<string, number>;
+}
+
+/** Miembros con más respuestas. */
+export function topMembers(limit = 5) {
+  return db
+    .prepare(
+      `SELECT u.id, u.name, u.role, COUNT(a.id) AS answers
+         FROM users u JOIN answers a ON a.user_id = u.id
+        GROUP BY u.id ORDER BY answers DESC LIMIT ?`,
+    )
+    .all(limit) as { id: number; name: string; role: "user" | "admin"; answers: number }[];
+}
+
+/** Otras preguntas de la misma categoría. */
+export function relatedQuestions(category: string, excludeId: number, limit = 5) {
+  return db
+    .prepare(
+      `SELECT q.id, q.title, (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) AS answers
+         FROM questions q WHERE q.category = ? AND q.id != ? ORDER BY q.created_at DESC LIMIT ?`,
+    )
+    .all(category, excludeId, limit) as { id: number; title: string; answers: number }[];
 }
 
 /** Publicaciones del usuario en el último minuto (límite anti-spam). */
