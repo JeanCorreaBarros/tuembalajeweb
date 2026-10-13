@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useInView } from "framer-motion";
+import { animate, m, useInView } from "framer-motion";
 import { Cloud, Layers, Trees, TreePine, Wind } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -29,24 +29,27 @@ function Counter({ to, decimals }: { to: number; decimals: number }) {
 export default function Stats() {
   return (
     <section className="relative z-10 border-b border-black/5 bg-white shadow-sm">
-      <div className="mx-auto grid max-w-[1240px] grid-cols-2 gap-y-8 px-5 py-8 sm:grid-cols-3 lg:grid-cols-5 lg:px-8">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-2 gap-y-8 px-3 sm:px-5 py-8 sm:grid-cols-3 lg:grid-cols-5 lg:px-8">
         {stats.map(({ icon: Icon, value, decimals, label }, i) => (
-          <motion.div
+          <m.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1, duration: 0.6 }}
-            className={`flex items-center gap-3 px-4 ${i > 0 ? "lg:border-l lg:border-black/10" : ""}`}
+            // En celular son 2 columnas: el quinto dato ocupa la fila completa y queda centrado.
+            className={`flex items-center gap-3 px-2 sm:px-4 ${i === stats.length - 1 ? "col-span-2 justify-center sm:col-span-1 sm:justify-start" : ""} ${
+              i > 0 ? "lg:border-l lg:border-black/10" : ""
+            }`}
           >
-            <Icon className="h-11 w-11 shrink-0 text-brand" strokeWidth={1.3} />
-            <div>
-              <p className="text-3xl font-extrabold leading-none text-forest">
+            <Icon className="h-9 w-9 shrink-0 text-brand sm:h-11 sm:w-11" strokeWidth={1.3} />
+            <div className="min-w-0">
+              <p className="text-2xl font-extrabold leading-none text-forest sm:text-3xl">
                 <Counter to={value} decimals={decimals} />
               </p>
-              <p className="mt-1 text-[10px] leading-tight text-ink/60">{label}</p>
+              <p className="mt-1 text-[11px] leading-tight text-ink/60 sm:text-[10px]">{label}</p>
             </div>
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </section>

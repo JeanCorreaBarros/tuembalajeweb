@@ -2,11 +2,11 @@ import "server-only";
 import { db } from "./db";
 
 export const CATEGORIES = [
-  { slug: "estibas-madera", label: "Estibas de madera" },
-  { slug: "estibas-plastico", label: "Estibas de plástico" },
+  { slug: "cajas-madera", label: "Cajas de madera" },
+  { slug: "estibas-madera", label: "Estibas y pallets" },
   { slug: "embalajes-especiales", label: "Embalajes especiales" },
+  { slug: "diseno-a-la-medida", label: "Diseño a la medida" },
   { slug: "exportacion", label: "Exportación y NIMF 15" },
-  { slug: "otros", label: "Otros productos" },
   { slug: "general", label: "General" },
 ] as const;
 
@@ -147,6 +147,16 @@ export function relatedQuestions(category: string, excludeId: number, limit = 5)
          FROM questions q WHERE q.category = ? AND q.id != ? ORDER BY q.created_at DESC LIMIT ?`,
     )
     .all(category, excludeId, limit) as { id: number; title: string; answers: number }[];
+}
+
+/** Preguntas para el sitemap: fecha de la última actividad (pregunta o respuesta más reciente). */
+export function sitemapQuestions(limit = 5000) {
+  return db
+    .prepare(
+      `SELECT q.id, MAX(q.created_at, COALESCE((SELECT MAX(a.created_at) FROM answers a WHERE a.question_id = q.id), 0)) AS updated
+         FROM questions q ORDER BY q.created_at DESC LIMIT ?`,
+    )
+    .all(limit) as { id: number; updated: number }[];
 }
 
 /** Publicaciones del usuario en el último minuto (límite anti-spam). */

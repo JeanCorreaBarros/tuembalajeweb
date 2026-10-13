@@ -1,13 +1,8 @@
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
 
-export const metadata: Metadata = {
-  title: "Foro de preguntas y respuestas | Tu Embalaje",
-  description:
-    "Pregunta y resuelve dudas sobre estibas, embalajes especiales, exportación y NIMF 15 con la comunidad y el equipo de Tu Embalaje.",
-};
+// Los metadatos van en cada página del foro (cada una con su propia URL canónica).
 
 export default function ForoLayout({ children }: { children: ReactNode }) {
   return (

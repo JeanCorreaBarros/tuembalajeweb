@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { WhatsAppIcon } from "./icons";
@@ -30,7 +30,7 @@ export default function Button({
   className = "",
 }: Props) {
   return (
-    <motion.a
+    <m.a
       href={href}
       whileHover={{ y: -2, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
@@ -41,6 +41,6 @@ export default function Button({
       {whatsapp && <WhatsAppIcon className="h-4 w-4" />}
       {children}
       {arrow && <ArrowRight className="h-3.5 w-3.5" />}
-    </motion.a>
+    </m.a>
   );
 }

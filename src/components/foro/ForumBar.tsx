@@ -13,7 +13,7 @@ export default function ForumBar({ crumbs = [] }: { crumbs?: Crumb[] }) {
   const all: Crumb[] = [{ label: "Inicio", href: "/" }, { label: "Foro", href: "/foro" }, ...crumbs];
 
   return (
-    <div className="mx-auto flex min-h-[56px] max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-2.5 text-[12px] lg:px-8">
+    <div className="mx-auto flex min-h-[56px] max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-2.5 text-[12px] sm:px-8">
       <nav aria-label="Ruta" className="flex min-w-0 items-center gap-1.5 font-medium text-white/60">
         {all.map((c, i) => {
           const last = i === all.length - 1;

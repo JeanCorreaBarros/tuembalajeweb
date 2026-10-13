@@ -7,6 +7,14 @@ import ForumHero from "@/components/foro/ForumHero";
 import { QuestionForm } from "@/components/foro/forms";
 import { getCurrentUser } from "@/lib/auth";
 import { CATEGORIES } from "@/lib/forum";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Haz una pregunta",
+  description: "Publica tu pregunta sobre embalajes en madera y recibe respuesta del equipo de Tu Embalaje.",
+  path: "/foro/preguntar",
+  noIndex: true,
+});
 
 const TIPS = [
   { icon: Search, title: "Busca primero", text: "Quizá tu duda ya tiene respuesta en el foro." },
@@ -35,7 +43,7 @@ async function Content() {
         title="Haz una pregunta"
         text="Mientras más detalles des, mejores respuestas recibirás."
       />
-      <div className="mx-auto grid max-w-[1240px] gap-8 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
         <QuestionForm categories={CATEGORIES} />
         <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm">
           <h3 className="flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wider text-forest-dark">

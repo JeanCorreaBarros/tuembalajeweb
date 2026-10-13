@@ -46,6 +46,10 @@ export async function register(_: FormState, fd: FormData): Promise<FormState> {
   if (name.length < 2 || name.length > 60) return { error: "Escribe tu nombre (2 a 60 caracteres)." };
   if (!EMAIL_RE.test(email) || email.length > 120) return { error: "Escribe un correo válido." };
   if (password.length < 8 || password.length > 100) return { error: "La contraseña debe tener al menos 8 caracteres." };
+  // La autorización de datos es obligatoria por ley: se valida también aquí, no solo en el navegador.
+  if (fd.get("acepto") !== "on") {
+    return { error: "Para crear la cuenta debes aceptar los términos y autorizar el tratamiento de tus datos." };
+  }
 
   if (db.prepare("SELECT 1 FROM users WHERE email = ?").get(email)) {
     return { error: "Ya existe una cuenta con ese correo. Prueba iniciar sesión." };

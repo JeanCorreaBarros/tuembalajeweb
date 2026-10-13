@@ -11,7 +11,7 @@ const BENEFITS = [
 /** Tarjeta de dos columnas para ingresar / registrarse. */
 export default function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
-    <div className="mx-auto max-w-[1000px] px-5 py-12 lg:py-16">
+    <div className="mx-auto max-w-[1000px] px-4 py-8 sm:px-8 sm:py-12 lg:py-16">
       <div className="grid overflow-hidden rounded-[28px] bg-white shadow-2xl shadow-forest/10 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="relative hidden overflow-hidden bg-forest-dark p-10 text-white lg:block">
           <div className="pointer-events-none absolute inset-0 [background:radial-gradient(70%_60%_at_100%_0%,#1fb34a55,transparent_60%),radial-gradient(60%_50%_at_0%_100%,#3be05a33,transparent_60%)]" />
@@ -33,7 +33,7 @@ export default function AuthShell({ title, subtitle, children }: { title: string
           </div>
         </div>
 
-        <div className="p-7 sm:p-10">
+        <div className="mx-auto w-full max-w-lg p-6 sm:p-10 lg:max-w-none">
           <h1 className="text-2xl font-extrabold text-forest-dark sm:text-[28px]">{title}</h1>
           <p className="mt-1.5 text-[14px] text-ink/60">{subtitle}</p>
           <div className="mt-7">{children}</div>

@@ -10,13 +10,17 @@ type Props = {
   className?: string;
   priority?: boolean;
   sizes?: string;
+  quality?: number;
+  /** si falta el archivo, no dibuja nada (en vez del recuadro de relleno) */
+  silent?: boolean;
 };
 
 /** Imagen que llena su contenedor (padre `relative`). Si falta el archivo muestra un relleno. */
-export default function SmartImage({ src, alt, className = "", priority, sizes = "100vw" }: Props) {
+export default function SmartImage({ src, alt, className = "", priority, sizes = "100vw", quality, silent }: Props) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
+    if (silent) return null;
     return (
       <div
         role="img"
@@ -36,6 +40,7 @@ export default function SmartImage({ src, alt, className = "", priority, sizes =
       fill
       sizes={sizes}
       priority={priority}
+      quality={quality}
       className={`object-cover ${className}`}
       onError={() => setFailed(true)}
     />

@@ -31,15 +31,33 @@ import {
   VIEWS,
   type View,
 } from "@/lib/forum";
+import { breadcrumbs, pageMetadata } from "@/lib/seo";
 import { SITE } from "@/lib/site";
+import JsonLd from "@/components/seo/JsonLd";
+
+// Los filtros (?q=, ?categoria=, ?pagina=) apuntan a /foro como URL canónica: evita contenido duplicado.
+export const metadata = pageMetadata({
+  title: "Foro de preguntas sobre embalajes en madera",
+  description:
+    "Pregunta y resuelve dudas sobre cajas de madera, estibas, embalajes especiales, exportación y NIMF 15 con la comunidad y el equipo de Tu Embalaje.",
+  path: "/foro",
+});
 
 type SP = Promise<{ q?: string; categoria?: string; pagina?: string; vista?: string }>;
 
 export default function ForoPage({ searchParams }: { searchParams: SP }) {
   return (
-    <Suspense fallback={<ListSkeleton />}>
-      <ForoList searchParams={searchParams} />
-    </Suspense>
+    <>
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Inicio", path: "/" },
+          { name: "Foro", path: "/foro" },
+        ])}
+      />
+      <Suspense fallback={<ListSkeleton />}>
+        <ForoList searchParams={searchParams} />
+      </Suspense>
+    </>
   );
 }
 
@@ -93,16 +111,17 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
         }
         text="Resuelve tus dudas sobre estibas, embalajes especiales, exportación y NIMF 15 con la comunidad y el equipo experto de Tu Embalaje."
       >
-        <form action="/foro" className="flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-2 shadow-2xl shadow-black/20">
+        <form action="/foro" className="flex max-w-2xl items-center gap-1.5 rounded-2xl bg-white p-1.5 shadow-2xl shadow-black/20 sm:gap-2 sm:p-2">
           {categoria && <input type="hidden" name="categoria" value={categoria} />}
-          <Search className="ml-3 h-5 w-5 shrink-0 text-ink/40" />
+          <Search className="ml-2.5 h-5 w-5 shrink-0 text-ink/40 sm:ml-3" />
           <input
             name="q"
+            type="search"
             defaultValue={q}
             placeholder="¿Qué quieres saber? Ej: estibas para exportar a Europa"
-            className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-[14px] text-ink outline-none placeholder:text-ink/40"
+            className="min-w-0 flex-1 bg-transparent px-1.5 py-2.5 text-base text-ink outline-none placeholder:text-ink/40 sm:px-2 sm:text-[14px]"
           />
-          <button className="rounded-xl bg-brand px-5 py-3 text-[13px] font-bold text-white transition hover:bg-brand-dark">
+          <button className="shrink-0 rounded-xl bg-brand px-4 py-3 text-[13px] font-bold text-white transition hover:bg-brand-dark sm:px-5">
             Buscar
           </button>
         </form>
@@ -124,16 +143,16 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
         </ul>
       </ForumHero>
 
-      <div className="mx-auto grid max-w-[1240px] gap-8 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
         {/* ---------- columna principal ---------- */}
         <div className="min-w-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <nav aria-label="Ordenar" className="flex flex-wrap gap-1 rounded-3xl bg-white p-1 shadow-sm sm:rounded-full">
+            <nav aria-label="Ordenar" className="no-scrollbar flex gap-1 overflow-x-auto rounded-full bg-white p-1 shadow-sm">
               {VIEWS.map((v) => (
                 <Link
                   key={v.slug}
                   href={href({ q, categoria, vista: v.slug })}
-                  className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-bold transition ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[12px] font-bold transition sm:px-4 ${
                     vista === v.slug ? "bg-forest text-white shadow" : "text-ink/60 hover:text-forest"
                   }`}
                 >
@@ -149,14 +168,15 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
             </Link>
           </div>
 
-          <ul className="mt-5 flex flex-wrap gap-2">
+          {/* En celular las categorías van en una fila que se desliza de lado. */}
+          <ul className="no-scrollbar -mx-5 mt-5 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:flex-wrap sm:px-0">
             {[{ slug: "", label: "Todas" }, ...CATEGORIES].map((c) => {
               const active = (categoria ?? "") === c.slug;
               return (
-                <li key={c.slug}>
+                <li key={c.slug} className="shrink-0">
                   <Link
                     href={href({ q, vista, categoria: c.slug || undefined })}
-                    className={`inline-block rounded-full border px-4 py-1.5 text-[12px] font-semibold transition ${
+                    className={`inline-block whitespace-nowrap rounded-full border px-4 py-1.5 text-[12px] font-semibold transition ${
                       active
                         ? "border-brand bg-brand/10 text-brand-dark"
                         : "border-black/10 bg-white text-ink/70 hover:border-brand hover:text-brand-dark"
@@ -218,7 +238,7 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
                 <li key={r.id}>
                   <Link
                     href={`/foro/${r.id}`}
-                    className="group flex gap-4 rounded-2xl border border-transparent bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-xl hover:shadow-forest/5"
+                    className="group flex gap-3 rounded-2xl border border-transparent bg-white p-4 shadow-sm sm:gap-4 sm:p-5 transition hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-xl hover:shadow-forest/5"
                   >
                     <Avatar name={r.author} role={r.author_role} />
                     <div className="min-w-0 flex-1">
@@ -244,6 +264,15 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
                             <CheckCircle2 className="h-3.5 w-3.5" /> Resuelta
                           </span>
                         )}
+                        {/* En celular la columna de respuestas/vistas se oculta: el dato va aquí. */}
+                        <span className="inline-flex items-center gap-3 text-[11px] text-ink/45 sm:hidden">
+                          <span className="inline-flex items-center gap-1">
+                            <MessageCircle className="h-3.5 w-3.5" /> {r.answers}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Eye className="h-3.5 w-3.5" /> {r.views}
+                          </span>
+                        </span>
                       </div>
                     </div>
                     <div className="hidden shrink-0 flex-col items-end justify-between gap-2 sm:flex">

@@ -10,16 +10,25 @@ import Process from "@/components/sections/Process";
 import Stats from "@/components/sections/Stats";
 import Testimonials from "@/components/sections/Testimonials";
 import Values from "@/components/sections/Values";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbs, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Nosotros | Tu Embalaje",
+export const metadata: Metadata = pageMetadata({
+  title: "Nosotros: fabricantes de embalajes en madera",
   description:
-    "Conoce a Tu Embalaje: diseñamos y fabricamos embalajes en madera y plástico reciclado, con calidad, servicio personalizado y compromiso ambiental.",
-};
+    "Conoce a Tu Embalaje: diseñamos y fabricamos embalajes en madera a la medida, con madera certificada NIMF 15, servicio personalizado y compromiso ambiental.",
+  path: "/nosotros",
+});
 
 export default function NosotrosPage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Inicio", path: "/" },
+          { name: "Nosotros", path: "/nosotros" },
+        ])}
+      />
       <Navbar solid />
       <main>
         <PageHeader

@@ -6,8 +6,9 @@ import { useActionState, useEffect, useRef, useState, type ReactNode } from "rea
 import { createAnswer, createQuestion, login, register, type FormState } from "@/app/foro/actions";
 import Avatar from "./Avatar";
 
+// En celular el texto va a 16px: con menos, iOS hace zoom al tocar el campo.
 const input =
-  "w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink/40 focus:border-brand focus:ring-4 focus:ring-brand/15";
+  "w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-base text-ink sm:text-[14px] outline-none transition placeholder:text-ink/40 focus:border-brand focus:ring-4 focus:ring-brand/15";
 const label = "mb-1.5 block text-[12px] font-bold text-forest-dark";
 
 function Submit({ pending, children, full }: { pending: boolean; children: ReactNode; full?: boolean }) {
@@ -95,6 +96,29 @@ export function AuthForm({ mode, next }: { mode: "login" | "register"; next: str
         </IconField>
       </div>
 
+      {/* Autorización previa y expresa para el tratamiento de datos (Ley 1581 de 2012). */}
+      {!isLogin && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-mist px-4 py-3 text-[13px] leading-snug text-ink/70">
+          <input
+            type="checkbox"
+            name="acepto"
+            required
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#1fb34a]"
+          />
+          <span>
+            Acepto los{" "}
+            <Link href="/terminos-y-condiciones" target="_blank" className="font-bold text-brand-dark hover:underline">
+              Términos y condiciones
+            </Link>{" "}
+            y autorizo el tratamiento de mis datos según la{" "}
+            <Link href="/politica-de-privacidad" target="_blank" className="font-bold text-brand-dark hover:underline">
+              Política de privacidad
+            </Link>
+            .
+          </span>
+        </label>
+      )}
+
       <ErrorMsg error={state.error} />
       <Submit pending={pending} full>
         {isLogin ? "Ingresar" : "Crear cuenta"}
@@ -121,7 +145,7 @@ export function QuestionForm({ categories }: { categories: readonly { slug: stri
   const [body, setBody] = useState("");
 
   return (
-    <form action={action} className="space-y-5 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+    <form action={action} className="min-w-0 space-y-5 rounded-3xl bg-white p-5 shadow-sm sm:p-8">
       <div>
         <label className={label}>Categoría</label>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -245,15 +269,14 @@ export function ReplyBox({
 }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(createAnswer.bind(null, questionId), initial);
-  const ref = useRef<HTMLFormElement>(null);
+  const [handled, setHandled] = useState(state);
 
-  // Al publicar con éxito se limpia y se cierra.
-  useEffect(() => {
-    if (state.ok) {
-      ref.current?.reset();
-      setOpen(false);
-    }
-  }, [state.ok]);
+  // Al publicar con éxito se cierra (y el formulario, al desmontarse, queda limpio).
+  // Se ajusta durante el render cuando llega un resultado nuevo, sin un efecto extra.
+  if (state !== handled) {
+    setHandled(state);
+    if (state.ok) setOpen(false);
+  }
 
   const button = "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-ink/55 transition hover:bg-brand/10 hover:text-brand-dark";
 
@@ -271,7 +294,7 @@ export function ReplyBox({
         <Reply className="h-4 w-4" /> {open ? "Cancelar" : "Responder"}
       </button>
       {open && (
-        <form ref={ref} action={action} className="order-last mt-3 w-full space-y-3 rounded-2xl bg-mist p-3">
+        <form action={action} className="order-last mt-3 w-full space-y-3 rounded-2xl bg-mist p-3">
           <input type="hidden" name="parent_id" value={parentId} />
           <textarea
             name="body"

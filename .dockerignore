@@ -1,0 +1,13 @@
+# Lo que NO se envía al construir la imagen (más rápido y sin secretos ni la base de datos local).
+node_modules
+.next
+.git
+.claude
+data
+.env*
+!.env.example
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+Dockerfile
+.dockerignore

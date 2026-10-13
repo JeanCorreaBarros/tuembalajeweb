@@ -4,6 +4,14 @@ import { Suspense } from "react";
 import AuthShell from "@/components/foro/AuthShell";
 import { AuthForm } from "@/components/foro/forms";
 import { getCurrentUser } from "@/lib/auth";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Ingresar al foro",
+  description: "Ingresa a tu cuenta para preguntar y responder en el foro de Tu Embalaje.",
+  path: "/foro/ingresar",
+  noIndex: true,
+});
 
 export default function IngresarPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   return (

@@ -11,7 +11,29 @@ import ForumHero from "@/components/foro/ForumHero";
 import { AnswerForm } from "@/components/foro/forms";
 import { getCurrentUser } from "@/lib/auth";
 import { addView, categoryLabel, getQuestion, listAnswers, relatedQuestions, timeAgo } from "@/lib/forum";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { SITE } from "@/lib/site";
 import { deleteQuestion } from "../actions";
+
+const parseId = (raw: string) => (/^\d+$/.test(raw) ? Number(raw) : NaN);
+/** Resumen de una línea para la descripción de Google (máx. ~155 caracteres). */
+const snippet = (text: string, max = 155) => {
+  const s = text.replace(/\s+/g, " ").trim();
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  await connection();
+  const id = parseId((await params).id);
+  const q = Number.isFinite(id) ? getQuestion(id) : undefined;
+  if (!q) return { title: "Pregunta no encontrada", robots: { index: false, follow: true } };
+  return pageMetadata({
+    title: q.title,
+    description: snippet(`${categoryLabel(q.category)}: ${q.body}`),
+    path: `/foro/${q.id}`,
+  });
+}
 
 export default function PreguntaPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -45,7 +67,7 @@ function Author({ name, role, ts, label }: { name: string; role: "user" | "admin
 async function Content({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id: raw } = await params;
-  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  const id = parseId(raw);
   const question = Number.isFinite(id) ? getQuestion(id) : undefined;
   if (!question) notFound();
 
@@ -60,8 +82,42 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   const canManage = !!user && (isOwner || user.role === "admin");
   const next = encodeURIComponent(`/foro/${question.id}`);
 
+  // Datos de pregunta y respuestas (QAPage): Google puede mostrarlos como resultado enriquecido.
+  const url = `${SITE.url}/foro/${question.id}`;
+  const toAnswer = (a: (typeof answers)[number]) => ({
+    "@type": "Answer",
+    text: a.body,
+    dateCreated: new Date(a.created_at).toISOString(),
+    upvoteCount: a.votes,
+    url: `${url}#r${a.id}`,
+    author: { "@type": "Person", name: a.author },
+  });
+  const accepted = answers.find((a) => a.id === question.accepted_id);
+  const qaPage = {
+    "@context": "https://schema.org",
+    "@type": "QAPage",
+    mainEntity: {
+      "@type": "Question",
+      name: question.title,
+      text: question.body,
+      answerCount: answers.length,
+      dateCreated: new Date(question.created_at).toISOString(),
+      author: { "@type": "Person", name: question.author },
+      ...(accepted ? { acceptedAnswer: toAnswer(accepted) } : {}),
+      suggestedAnswer: answers.filter((a) => a.id !== question.accepted_id).map(toAnswer),
+    },
+  };
+
   return (
     <>
+      {answers.length > 0 && <JsonLd data={qaPage} />}
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Inicio", path: "/" },
+          { name: "Foro", path: "/foro" },
+          { name: question.title, path: `/foro/${question.id}` },
+        ])}
+      />
       <ForumHero
         bar={<ForumBar crumbs={[{ label: categoryLabel(question.category), href: `/foro?categoria=${question.category}` }, { label: "Pregunta" }]} />}
         eyebrow={categoryLabel(question.category)}
@@ -86,9 +142,9 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         </div>
       </ForumHero>
 
-      <div className="mx-auto grid max-w-[1240px] gap-8 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
         <div className="min-w-0">
-          <article className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <article className="rounded-3xl bg-white p-5 shadow-sm sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Author name={question.author} role={question.author_role} ts={question.created_at} label="Preguntó" />
               {canManage && (
@@ -137,7 +193,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
             {user ? (
               <AnswerForm questionId={question.id} userName={user.name} userRole={user.role} />
             ) : (
-              <div className="flex flex-col items-center gap-4 rounded-3xl bg-white p-8 text-center shadow-sm sm:flex-row sm:text-left">
+              <div className="flex flex-col items-center gap-4 rounded-3xl bg-white p-6 text-center shadow-sm sm:flex-row sm:p-8 sm:text-left">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
                   <MessageCircle className="h-7 w-7" />
                 </span>

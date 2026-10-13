@@ -14,8 +14,99 @@
   --font-script: var(--font-script), cursive;
 }
 
+/* Animaciones de entrada en CSS puro: arrancan con el primer pintado, sin esperar a que cargue
+   JavaScript. Así el título del hero se ve antes (mejor LCP en Google). */
+@theme {
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.8s ease-out both;
+  --animate-slide-down: slide-down 0.7s ease-out both;
+  --animate-hero-zoom: hero-zoom 2.2s ease-out both;
+  --animate-pop-in: pop-in 0.9s ease-out both;
+  --animate-draw: draw 1s ease-out both;
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-80px);
+    }
+  }
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1.06);
+    }
+  }
+  /* Usa --pop-rotate (giro final) para la frase manuscrita inclinada. */
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateX(40px) rotate(calc(var(--pop-rotate, 0deg) - 2deg));
+    }
+    to {
+      opacity: 1;
+      transform: rotate(var(--pop-rotate, 0deg));
+    }
+  }
+  /* Trazo que se dibuja: el <path> lleva pathLength="1". */
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  /* Vaivén de los dibujos del hero; --float-rotate es el giro base de cada pieza. */
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(calc(var(--float-rotate, 0deg) - 1.5deg));
+    }
+    50% {
+      transform: translateY(-12px) rotate(calc(var(--float-rotate, 0deg) + 1.5deg));
+    }
+  }
+}
+
+.draw-path {
+  stroke-dasharray: 1;
+}
+
 html {
   scroll-behavior: smooth;
+  /* Evita que iOS agrande el texto al girar el teléfono. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Listas con desplazamiento horizontal (chips) sin barra visible. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Las animaciones de entrada desplazan elementos hacia los lados antes de aparecer:
+   recortamos el desbordamiento horizontal para que la página nunca sea más ancha que la pantalla. */
+html,
+body {
+  overflow-x: clip;
 }
 
 body {
@@ -27,5 +118,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

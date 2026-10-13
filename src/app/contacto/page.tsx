@@ -7,12 +7,16 @@ import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
 import Reveal from "@/components/ui/Reveal";
 import { WhatsAppIcon } from "@/components/ui/icons";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbs, pageMetadata } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Contacto | Tu Embalaje",
-  description: "Solicita tu asesoría gratis. Cotiza estibas, embalajes especiales y productos en madera a tu medida.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Contacto y cotizaciones",
+  description:
+    "Solicita tu asesoría gratis y cotiza cajas de madera, estibas, pallets y embalajes especiales a tu medida. Escríbenos por WhatsApp o llámanos.",
+  path: "/contacto",
+});
 
 const info = [
   { icon: Phone, label: "Teléfono", value: SITE.phoneDisplay, sub: "Llámanos o escríbenos por WhatsApp", href: `tel:${SITE.phoneTel}` },
@@ -30,6 +34,12 @@ const trust = [
 export default function ContactoPage() {
   return (
     <>
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Inicio", path: "/" },
+          { name: "Contacto", path: "/contacto" },
+        ])}
+      />
       <Navbar solid />
       <main>
         <ContactHero />
@@ -38,14 +48,14 @@ export default function ContactoPage() {
           <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-brand/10 blur-2xl" />
           <div className="pointer-events-none absolute -right-24 top-1/2 h-72 w-72 rounded-full bg-lime/10 blur-2xl" />
 
-          <div className="relative mx-auto grid max-w-[1240px] gap-6 px-5 lg:grid-cols-[1.35fr_1fr] lg:px-8">
-            <div>
+          <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 gap-6 px-5 sm:px-8 lg:grid-cols-[1.35fr_1fr] lg:px-8">
+            <div className="min-w-0">
               <Reveal x={-30} y={0}>
                 <Suspense fallback={<div className="h-[520px] rounded-2xl bg-white shadow-xl" />}>
                   <ContactForm />
                 </Suspense>
               </Reveal>
-              <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-3 pl-2">
+              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-3 pl-2 sm:gap-x-8">
                 {trust.map(({ icon: Icon, label }) => (
                   <li key={label} className="flex items-center gap-2 text-[11px] font-medium text-ink/60">
                     <Icon className="h-5 w-5 text-forest" strokeWidth={1.4} /> {label}
@@ -54,7 +64,8 @@ export default function ContactoPage() {
               </ul>
             </div>
 
-            <div className="space-y-3.5">
+            {/* En tablet las tarjetas de contacto van en dos columnas; en celular y escritorio, una. */}
+            <div className="grid min-w-0 grid-cols-1 content-start gap-3.5 md:grid-cols-2 lg:grid-cols-1">
               {info.map(({ icon: Icon, label, value, sub, href }, i) => {
                 const body = (
                   <>
@@ -86,7 +97,7 @@ export default function ContactoPage() {
                 );
               })}
 
-              <Reveal delay={0.35} x={30} y={0}>
+              <Reveal delay={0.35} x={30} y={0} className="md:col-span-2 lg:col-span-1">
                 <a
                   href={`https://wa.me/${SITE.whatsapp}`}
                   target="_blank"
@@ -103,7 +114,7 @@ export default function ContactoPage() {
                 </a>
               </Reveal>
 
-              <p className="pr-2 text-right font-script text-lg text-forest-mid -rotate-2">
+              <p className="pr-2 text-right font-script text-lg text-forest-mid -rotate-2 md:col-span-2 lg:col-span-1">
                 Tu aliado en soluciones de embalaje
               </p>
             </div>

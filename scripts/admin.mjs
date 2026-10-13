@@ -44,7 +44,8 @@ const hashPassword = (password) =>
     );
   });
 
-const env = readEnv();
+// .env.local (en tu PC) o variables de entorno del servidor (en Easypanel/Docker no hay .env.local).
+const env = { ...process.env, ...readEnv() };
 const [argEmail, argName, argPassword] = process.argv.slice(2);
 const email = (argEmail ?? env.ADMIN_EMAIL ?? "").trim().toLowerCase();
 const name = argName ?? "Equipo Tu Embalaje";
@@ -84,11 +85,18 @@ if (existing) {
   console.log(`Administrador creado: ${email}`);
 }
 
-setEnv("ADMIN_EMAIL", email);
-if (generated) {
-  setEnv("ADMIN_PASSWORD", password);
-  console.log("Contraseña generada y guardada en .env.local (ADMIN_PASSWORD).");
-} else {
-  console.log("Contraseña establecida.");
-}
 db.close();
+
+// En el servidor (Docker) no se puede escribir .env.local: en ese caso la contraseña se muestra aquí.
+let saved = false;
+try {
+  setEnv("ADMIN_EMAIL", email);
+  if (generated) setEnv("ADMIN_PASSWORD", password);
+  saved = true;
+} catch {
+  saved = false;
+}
+
+if (!generated) console.log("Contraseña establecida.");
+else if (saved) console.log("Contraseña generada y guardada en .env.local (ADMIN_PASSWORD).");
+else console.log(`Contraseña generada (guárdala, no se volverá a mostrar): ${password}`);
