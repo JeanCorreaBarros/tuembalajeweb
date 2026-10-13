@@ -41,9 +41,6 @@ export default function CTA() {
               Solicita tu asesoría GRATIS
             </Button>
           </m.div>
-          <Button href="/contacto" variant="outline" arrow={false} className="justify-center">
-            Contáctanos
-          </Button>
         </Reveal>
       </div>
     </section>

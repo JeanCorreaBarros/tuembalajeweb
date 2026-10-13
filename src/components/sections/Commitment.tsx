@@ -12,32 +12,69 @@ const badges = [
   { icon: Recycle, label: "Reutilización\nde materiales" },
 ];
 
-/** Mancha de pintura verde (trazo de pincel) detrás del mensaje. */
+/*
+ * Pincelada verde: varias pasadas horizontales de distinto largo (así los extremos quedan
+ * deshilachados) + vetas de cerdas, y un filtro que vuelve ásperos los bordes como pintura real.
+ * Verde claro a la izquierda y más oscuro a la derecha.
+ */
+const BANDS: [y: number, x0: number, x1: number, width: number][] = [
+  [44, 46, 366, 16],
+  [60, 24, 390, 22],
+  [80, 12, 404, 24],
+  [102, 20, 398, 26],
+  [124, 6, 410, 26],
+  [146, 14, 402, 26],
+  [168, 8, 396, 24],
+  [188, 24, 386, 22],
+  [205, 48, 358, 16],
+];
+const band = ([y, x0, x1]: (typeof BANDS)[number]) => {
+  const d = x1 - x0;
+  return `M${x0} ${y + 3} C${x0 + d * 0.3} ${y - 5} ${x0 + d * 0.65} ${y + 5} ${x1} ${y - 3}`;
+};
+// Vetas: [y, inicio, fin, clara (true) u oscura]
+const STREAKS: [number, number, number, boolean][] = [
+  [52, 60, 330, true],
+  [70, 30, 250, false],
+  [90, 110, 392, true],
+  [113, 22, 300, false],
+  [133, 70, 400, true],
+  [156, 18, 260, true],
+  [160, 220, 390, false],
+  [178, 40, 350, false],
+  [196, 70, 330, true],
+];
+
 function BrushStroke() {
   return (
-    <svg viewBox="0 0 400 230" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
+    <svg viewBox="0 0 420 240" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden>
       <defs>
-        <linearGradient id="brushFill" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#159a3c" />
-          <stop offset="0.55" stopColor="#1fb34a" />
-          <stop offset="1" stopColor="#127a31" />
+        <linearGradient id="brushFill" x1="0" y1="40" x2="420" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#4cc962" />
+          <stop offset="0.35" stopColor="#25ad4b" />
+          <stop offset="0.75" stopColor="#168c38" />
+          <stop offset="1" stopColor="#0d6a2a" />
         </linearGradient>
+        <filter id="brushRough" x="-8%" y="-15%" width="116%" height="130%">
+          {/* Ruido alargado en horizontal: deforma los bordes como cerdas de pincel. */}
+          <feTurbulence type="fractalNoise" baseFrequency="0.018 0.32" numOctaves="3" seed="7" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
       </defs>
-      <path
-        fill="url(#brushFill)"
-        d="M26 64 C70 40 150 30 248 22 C300 18 350 10 388 18 L376 34 L394 44 L380 58 C390 98 388 140 376 172 L392 186 L366 196
-           C290 206 196 212 112 218 C78 220 46 220 22 214 L36 200 L10 192 L28 180 C12 146 10 104 18 80 L4 72 Z"
-      />
-      {/* vetas del pincel */}
-      <g stroke="#ffffff" strokeOpacity="0.12" strokeWidth="3" strokeLinecap="round" fill="none">
-        <path d="M40 74 C140 58 260 46 370 36" />
-        <path d="M30 120 C150 108 270 98 382 92" />
-        <path d="M34 168 C140 160 250 150 372 142" />
-        <path d="M48 200 C150 196 250 188 340 184" />
-      </g>
-      <g stroke="#0b3b28" strokeOpacity="0.18" strokeWidth="2" strokeLinecap="round" fill="none">
-        <path d="M60 96 C170 84 280 74 360 66" />
-        <path d="M52 146 C170 136 280 126 368 118" />
+
+      <g filter="url(#brushRough)" strokeLinecap="round" fill="none">
+        {BANDS.map((b, i) => (
+          <path key={i} d={band(b)} stroke="url(#brushFill)" strokeWidth={b[3]} strokeOpacity={i % 3 === 1 ? 0.92 : 1} />
+        ))}
+        {STREAKS.map(([y, x0, x1, light], i) => (
+          <path
+            key={`s${i}`}
+            d={`M${x0} ${y + 2} C${x0 + (x1 - x0) * 0.35} ${y - 3} ${x0 + (x1 - x0) * 0.7} ${y + 3} ${x1} ${y - 2}`}
+            stroke={light ? "#ffffff" : "#0b3b28"}
+            strokeOpacity={light ? 0.16 : 0.2}
+            strokeWidth={light ? 1.6 : 1.3}
+          />
+        ))}
       </g>
     </svg>
   );
@@ -86,25 +123,26 @@ export default function Commitment() {
         </Reveal>
 
         <m.div
-          initial={{ opacity: 0, rotate: -14, scale: 0.85 }}
-          whileInView={{ opacity: 1, rotate: -9, scale: 1 }}
+          initial={{ opacity: 0, rotate: -10, scale: 0.85 }}
+          whileInView={{ opacity: 1, rotate: -6, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="relative mx-auto aspect-[400/230] w-full max-w-[400px] drop-shadow-xl"
+          className="relative mx-auto aspect-[420/240] w-full max-w-[420px] drop-shadow-[0_12px_18px_rgba(6,42,28,0.28)]"
         >
           <BrushStroke />
-          <div className="relative flex h-full items-center justify-center gap-3 px-[12%] pb-2">
-            <p className="font-script text-[clamp(18px,5.6vw,22px)] leading-[1.15] text-white md:text-[20px] lg:text-[22px] xl:text-[25px]">
+          <div className="relative flex h-full items-center justify-center gap-[3%] px-[11%] pb-1">
+            <p className="font-[family-name:var(--font-hand)] text-[clamp(25px,7.6vw,32px)] font-bold leading-[1.02] text-white [text-shadow:0_1px_2px_rgba(6,42,28,0.25)] md:text-[27px] lg:text-[29px] xl:text-[33px]">
               Pequeñas acciones
               <br />
               también hacen
               <br />
               grandes cambios
-              <svg viewBox="0 0 200 16" className="mt-1 h-3 w-full max-w-44 text-lime" fill="none" aria-hidden>
+              {/* Subrayado de pincel, más grueso al centro. */}
+              <svg viewBox="0 0 220 18" className="-mt-0.5 h-[0.5em] w-[88%] text-lime" fill="none" aria-hidden>
                 <m.path
-                  d="M4 12C60 2 130 2 196 7"
+                  d="M6 13C64 5 138 3 214 7"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="4.5"
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
                   whileInView={{ pathLength: 1 }}
@@ -113,9 +151,7 @@ export default function Commitment() {
                 />
               </svg>
             </p>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/90 text-white">
-              <Leaf className="h-5 w-5" />
-            </span>
+            <Leaf aria-hidden className="h-[24%] w-auto shrink-0 translate-y-[20%] text-white" strokeWidth={1.6} />
           </div>
         </m.div>
       </div>

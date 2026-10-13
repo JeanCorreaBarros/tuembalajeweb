@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Kaushan_Script } from "next/font/google";
+import { Caveat, Montserrat, Kaushan_Script } from "next/font/google";
 import { Suspense } from "react";
 import JsonLd from "@/components/seo/JsonLd";
 import MotionProvider from "@/components/ui/MotionProvider";
@@ -20,6 +20,15 @@ const script = Kaushan_Script({
   variable: "--font-script",
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
+  preload: false,
+});
+
+// Letra a mano (tipo marcador) de la frase "Pequeñas acciones…". Tampoco se precarga.
+const hand = Caveat({
+  variable: "--font-hand",
+  subsets: ["latin"],
+  weight: "700",
   display: "swap",
   preload: false,
 });
@@ -105,7 +114,7 @@ const organization = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es-CO" className={`${montserrat.variable} ${script.variable} antialiased`}>
+    <html lang="es-CO" className={`${montserrat.variable} ${script.variable} ${hand.variable} antialiased`}>
       <body className="min-h-screen overflow-x-hidden">
         <JsonLd data={organization} />
         <Suspense fallback={null}>
