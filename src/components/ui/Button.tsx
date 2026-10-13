@@ -1,0 +1,46 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import type { ReactNode } from "react";
+import { WhatsAppIcon } from "./icons";
+
+type Props = {
+  children: ReactNode;
+  href?: string;
+  variant?: "solid" | "outline";
+  whatsapp?: boolean;
+  arrow?: boolean;
+  size?: "sm" | "md";
+  className?: string;
+};
+
+const variants = {
+  solid: "bg-brand text-white shadow-lg shadow-brand/30 hover:bg-brand-dark",
+  outline: "border border-white/70 text-white hover:bg-white/10",
+};
+
+export default function Button({
+  children,
+  href = "/contacto",
+  variant = "solid",
+  whatsapp,
+  arrow = true,
+  size = "md",
+  className = "",
+}: Props) {
+  return (
+    <motion.a
+      href={href}
+      whileHover={{ y: -2, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      className={`inline-flex items-center gap-2 rounded-full font-semibold transition-colors ${
+        size === "sm" ? "px-4 py-2 text-[11px]" : "px-6 py-3 text-xs"
+      } ${variants[variant]} ${className}`}
+    >
+      {whatsapp && <WhatsAppIcon className="h-4 w-4" />}
+      {children}
+      {arrow && <ArrowRight className="h-3.5 w-3.5" />}
+    </motion.a>
+  );
+}
