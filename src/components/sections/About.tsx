@@ -6,6 +6,7 @@ import { IMAGES } from "@/lib/images";
 import Button from "../ui/Button";
 import Reveal from "../ui/Reveal";
 import SmartImage from "../ui/SmartImage";
+import Watermark from "../ui/Watermark";
 
 const points = [
   { icon: Cog, title: "Compromiso\ncon la calidad" },
@@ -14,9 +15,16 @@ const points = [
   { icon: Truck, title: "Entregas a nivel nacional\ne internacional" },
 ];
 
-export default function About() {
+/** `watermark`: muestra los símbolos del logo de fondo (se usa en /nosotros, no en el inicio). */
+export default function About({ watermark = false }: { watermark?: boolean }) {
   return (
-    <section id="nosotros" className="bg-[#f7f8f7] py-14 lg:py-12">
+    <section id="nosotros" className="relative isolate overflow-hidden bg-[#f7f8f7] py-14 lg:py-12">
+      {watermark && (
+        <Watermark
+          tone="mist"
+          items={[{ symbol: "cycle", className: "-left-28 -bottom-16 w-[300px] -rotate-6 md:-left-40 md:w-[500px]" }]}
+        />
+      )}
       {/* Celular: una columna. Tablet: texto arriba y foto + puntos lado a lado. Escritorio: tres columnas. */}
       <div className="grid grid-cols-1 items-center gap-10 px-5 sm:px-8 md:grid-cols-2 md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,31%)_minmax(250px,20%)] lg:gap-[2.5%] lg:pl-[6%] lg:pr-[5%]">
         <Reveal x={-40} y={0} className="md:col-span-2 lg:col-span-1">

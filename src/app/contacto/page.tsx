@@ -6,6 +6,7 @@ import ContactHero from "@/components/sections/ContactHero";
 import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
 import Reveal from "@/components/ui/Reveal";
+import Watermark from "@/components/ui/Watermark";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
@@ -44,7 +45,14 @@ export default function ContactoPage() {
       <main>
         <ContactHero />
 
-        <section className="relative overflow-hidden bg-mist/60 py-12 lg:py-14">
+        <section className="relative isolate overflow-hidden bg-mist/60 py-12 lg:py-14">
+          <Watermark
+            tone="mist"
+            items={[
+              { symbol: "recycle", className: "-left-24 top-8 w-[280px] -rotate-12 md:-left-36 md:w-[480px]" },
+              { symbol: "leaf", className: "-right-24 bottom-6 w-[260px] rotate-12 md:-right-32 md:w-[420px]" },
+            ]}
+          />
           <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-brand/10 blur-2xl" />
           <div className="pointer-events-none absolute -right-24 top-1/2 h-72 w-72 rounded-full bg-lime/10 blur-2xl" />
 

@@ -40,7 +40,7 @@ export default function NosotrosPage() {
           }
           text="Combinamos experiencia, calidad y sostenibilidad para que tus productos lleguen seguros a su destino."
         />
-        <About />
+        <About watermark />
         <Values />
         <Stats />
         <Process />

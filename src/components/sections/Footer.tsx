@@ -1,7 +1,7 @@
 import { ArrowUpRight, Clock, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PRODUCTS } from "@/lib/products";
+import { FEATURED_PRODUCTS } from "@/lib/products";
 import { SITE } from "@/lib/site";
 import Logo from "../ui/Logo";
 import { InstagramIcon, WhatsAppIcon } from "../ui/icons";
@@ -23,7 +23,7 @@ function Title({ children }: { children: ReactNode }) {
   );
 }
 
-const linkCls = "group inline-flex items-center gap-1.5 text-[13px] text-white/65 transition-colors hover:text-lime";
+const linkCls = "group inline-flex items-center gap-1.5 py-1 text-[13px] text-white/65 transition-colors hover:text-lime";
 
 function ContactRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
@@ -31,7 +31,7 @@ function ContactRow({ icon, children }: { icon: ReactNode; children: ReactNode }
       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-lime ring-1 ring-white/10 [&>svg]:h-4 [&>svg]:w-4">
         {icon}
       </span>
-      <div className="flex min-w-0 flex-col gap-0.5 text-[13px] text-white/75">{children}</div>
+      <div className="flex min-w-0 flex-col text-[13px] text-white/75">{children}</div>
     </li>
   );
 }
@@ -70,7 +70,7 @@ export default function Footer() {
         {/* Navegación */}
         <nav aria-label="Navegación del pie de página">
           <Title>Navegación</Title>
-          <ul className="mt-5 space-y-3">
+          <ul className="mt-4 space-y-1">
             {NAV.map((n) => (
               <li key={n.href}>
                 <Link href={n.href} className={linkCls}>
@@ -84,8 +84,8 @@ export default function Footer() {
         {/* Productos */}
         <div>
           <Title>Productos</Title>
-          <ul className="mt-5 space-y-3">
-            {PRODUCTS.map((p) => (
+          <ul className="mt-4 space-y-1">
+            {FEATURED_PRODUCTS.map((p) => (
               <li key={p.slug}>
                 <Link href={`/productos#${p.slug}`} className={linkCls}>
                   {p.title}
@@ -102,14 +102,14 @@ export default function Footer() {
           <ul className="mt-5 space-y-4">
             <ContactRow icon={<Phone />}>
               {SITE.phones.map((p) => (
-                <a key={p.tel} href={`tel:${p.tel}`} className="transition-colors hover:text-lime">
+                <a key={p.tel} href={`tel:${p.tel}`} className="py-0.5 transition-colors hover:text-lime">
                   {p.display}
                 </a>
               ))}
             </ContactRow>
             <ContactRow icon={<Mail />}>
               {SITE.emails.map((e) => (
-                <a key={e} href={`mailto:${e}`} className="truncate transition-colors hover:text-lime">
+                <a key={e} href={`mailto:${e}`} className="truncate py-0.5 transition-colors hover:text-lime">
                   {e}
                 </a>
               ))}
@@ -137,13 +137,13 @@ export default function Footer() {
         <div className="mx-auto flex max-w-[1240px] flex-col items-center justify-between gap-2 px-5 py-5 text-center text-[12px] text-white/50 sm:px-8 lg:flex-row lg:px-8 lg:text-left">
           <span>Copyright © 2026 Tu Embalaje SAS. Todos los derechos reservados.</span>
           <nav aria-label="Documentos legales" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <Link href="/politica-de-privacidad" className="transition-colors hover:text-lime">
+            <Link href="/politica-de-privacidad" className="inline-block py-1.5 transition-colors hover:text-lime">
               Política de privacidad
             </Link>
             <span aria-hidden className="text-white/20">
               |
             </span>
-            <Link href="/terminos-y-condiciones" className="transition-colors hover:text-lime">
+            <Link href="/terminos-y-condiciones" className="inline-block py-1.5 transition-colors hover:text-lime">
               Términos y condiciones
             </Link>
           </nav>

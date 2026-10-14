@@ -1,21 +1,48 @@
 "use client";
 
 import { m } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowUpRight, Calculator, CheckCircle2, ClipboardList } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import type { Product } from "@/lib/products";
 import Button from "../ui/Button";
 import Reveal from "../ui/Reveal";
 import SmartImage from "../ui/SmartImage";
+import Watermark, { type WatermarkItem } from "../ui/Watermark";
+import ProductSpecsModal from "./ProductSpecsModal";
 
-export default function ProductDetail({ product, index }: { product: Product; index: number }) {
-  const flip = index % 2 === 1;
+/** Marca de agua por producto: va del lado del texto y alterna los símbolos del logo. */
+const SYMBOLS = ["recycle", "cycle", "leaf"] as const;
+
+/**
+ * `index`: número del producto en el catálogo (se muestra como "Producto N").
+ * `position`: lugar en la lista visible tras buscar/filtrar; define la alternancia izquierda/derecha.
+ */
+export default function ProductDetail({
+  product,
+  index,
+  position = index,
+}: {
+  product: Product;
+  index: number;
+  position?: number;
+}) {
+  const flip = position % 2 === 1;
+  const [specsOpen, setSpecsOpen] = useState(false);
+  const watermark: WatermarkItem = {
+    symbol: SYMBOLS[position % SYMBOLS.length],
+    className: flip
+      ? "-left-28 top-1/2 w-[300px] -translate-y-1/2 -rotate-12 md:-left-40 md:w-[520px]"
+      : "-right-28 top-1/2 w-[300px] -translate-y-1/2 rotate-12 md:-right-40 md:w-[520px]",
+  };
   return (
     <section
       id={product.slug}
-      // Menú fijo (85px) + barra de categorías (~60px): el título queda visible al saltar a la sección.
-      className={`scroll-mt-[145px] py-12 sm:py-16 ${flip ? "bg-mist/70" : "bg-white"}`}
+      // Al saltar a la sección: menú fijo (85px) + barra de búsqueda fija desde tablet (~66px).
+      className={`relative isolate scroll-mt-[100px] md:scroll-mt-[160px] overflow-hidden py-12 sm:py-16 ${flip ? "bg-mist/70" : "bg-white"}`}
     >
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-8 px-5 sm:gap-10 sm:px-8 md:grid-cols-2 lg:gap-16 lg:px-8">
+      <Watermark items={[watermark]} tone={flip ? "mist" : "light"} />
+      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-8 px-5 sm:gap-10 sm:px-8 md:grid-cols-2 lg:gap-16 lg:px-8">
         <Reveal x={flip ? 40 : -40} y={0} className={flip ? "md:order-2" : ""}>
           <m.div
             whileHover={{ scale: 1.02 }}
@@ -73,13 +100,40 @@ export default function ProductDetail({ product, index }: { product: Product; in
             </ul>
           )}
 
-          <Button
-            href={`/contacto?producto=${product.slug}`}
-            whatsapp
-            className="mt-7 w-full justify-center sm:w-auto"
+          {/* Ficha técnica: abre un modal con todos los datos. */}
+          <button
+            type="button"
+            onClick={() => setSpecsOpen(true)}
+            aria-haspopup="dialog"
+            className="group mt-6 flex w-full items-center gap-3.5 rounded-2xl border border-black/10 bg-white p-3.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md"
           >
-            Cotiza {product.title.toLowerCase()}
-          </Button>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-forest text-white shadow-md shadow-forest/20">
+              <ClipboardList className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-bold text-forest-dark">Ficha técnica</span>
+              <span className="block text-[12px] text-ink/55">{product.specs.length} especificaciones · madera, medidas, ensamble…</span>
+            </span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand transition group-hover:bg-brand group-hover:text-white">
+              <ArrowUpRight className="h-4 w-4" aria-hidden />
+            </span>
+          </button>
+          <ProductSpecsModal product={product} number={index + 1} open={specsOpen} onClose={() => setSpecsOpen(false)} />
+
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Button href={`/contacto?producto=${product.slug}`} whatsapp className="w-full justify-center sm:w-auto">
+              Cotiza {product.title.toLowerCase()}
+            </Button>
+            {/* Las estibas tienen rango de precio en el cotizador. */}
+            {product.slug.startsWith("estiba") && (
+              <Link
+                href="/cotizador"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-forest/20 px-5 py-3 text-xs font-semibold text-forest-dark transition hover:border-brand hover:text-brand-dark"
+              >
+                <Calculator className="h-4 w-4" aria-hidden /> Calcular en el cotizador
+              </Link>
+            )}
+          </div>
         </Reveal>
       </div>
     </section>

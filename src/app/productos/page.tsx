@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import CTA from "@/components/sections/CTA";
 import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
-import ProductDetail from "@/components/sections/ProductDetail";
+import ProductCatalog from "@/components/sections/ProductCatalog";
 import ProductsHeader from "@/components/sections/ProductsHeader";
 import JsonLd from "@/components/seo/JsonLd";
 import { PRODUCTS } from "@/lib/products";
@@ -50,9 +50,7 @@ export default function ProductosPage() {
       <Navbar solid />
       <main>
         <ProductsHeader />
-        {PRODUCTS.map((p, i) => (
-          <ProductDetail key={p.slug} product={p} index={i} />
-        ))}
+        <ProductCatalog products={PRODUCTS} />
         <CTA />
       </main>
       <Footer />

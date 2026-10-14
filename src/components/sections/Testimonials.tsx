@@ -137,14 +137,18 @@ export default function Testimonials() {
             <button aria-label="Anterior" onClick={prev} className={`${arrowCls} flex sm:hidden`}>
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <div className="flex gap-1.5">
+            <div className="flex">
               {testimonials.map((_, d) => (
                 <button
                   key={d}
                   aria-label={`Testimonio ${d + 1}`}
+                  aria-current={d === i}
                   onClick={() => setI(d)}
-                  className={`h-1.5 rounded-full transition-all ${d === i ? "w-5 bg-white" : "w-1.5 bg-white/40"}`}
-                />
+                  // Zona táctil amplia (28px) con el punto pequeño dentro.
+                  className="flex h-7 min-w-7 items-center justify-center"
+                >
+                  <span className={`h-1.5 rounded-full transition-all ${d === i ? "w-5 bg-white" : "w-1.5 bg-white/40"}`} />
+                </button>
               ))}
             </div>
             <button aria-label="Siguiente" onClick={next} className={`${arrowCls} flex sm:hidden`}>

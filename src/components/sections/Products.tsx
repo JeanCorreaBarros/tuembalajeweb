@@ -3,7 +3,7 @@
 import { m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { PRODUCTS } from "@/lib/products";
+import { FEATURED_PRODUCTS } from "@/lib/products";
 import Button from "../ui/Button";
 import Reveal from "../ui/Reveal";
 import SmartImage from "../ui/SmartImage";
@@ -30,7 +30,7 @@ export default function Products() {
         </Reveal>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-          {PRODUCTS.map((p, i) => (
+          {FEATURED_PRODUCTS.map((p, i) => (
             <Reveal key={p.slug} delay={i * 0.1}>
               <Link href={`/productos#${p.slug}`} className="block h-full">
                 <m.article

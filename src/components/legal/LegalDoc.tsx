@@ -94,7 +94,7 @@ export default function LegalDoc({
           {/* Índice */}
           <aside className="lg:sticky lg:top-[109px] lg:h-fit">
             <details className="group rounded-2xl bg-white p-5 shadow-sm lg:open:block" open>
-              <summary className="flex cursor-pointer list-none items-center justify-between text-[12px] font-extrabold uppercase tracking-wider text-forest-dark lg:cursor-default">
+              <summary className="-my-2 flex cursor-pointer list-none items-center justify-between py-2 text-[12px] font-extrabold uppercase tracking-wider text-forest-dark lg:cursor-default">
                 <span className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-brand" aria-hidden /> Contenido
                 </span>

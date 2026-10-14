@@ -1,34 +1,26 @@
 import type { CSSProperties } from "react";
+import { WATERMARK_SYMBOLS, type WatermarkSymbol } from "./watermark-symbols";
 import {
-  Award,
-  Boxes,
   CircleHelp,
   Clock,
-  Handshake,
   Headset,
-  Layers,
-  Leaf,
   Lightbulb,
   type LucideIcon,
   Mail,
   MapPin,
   MessageCircle,
   MessagesSquare,
-  Package,
-  PackageCheck,
   Phone,
-  Ruler,
-  ShieldCheck,
   ThumbsUp,
-  TreePine,
-  Truck,
   Users,
 } from "lucide-react";
 
 export type HeroArtVariant = "productos" | "nosotros" | "contacto" | "foro";
 
 type Piece = {
-  icon: LucideIcon;
+  /** Dibujo de línea (lucide) o, en su lugar, un símbolo del logo oficial (`symbol`). */
+  icon?: LucideIcon;
+  symbol?: WatermarkSymbol;
   /** posición en % dentro de la mitad derecha del hero */
   x: number;
   y: number;
@@ -42,23 +34,23 @@ type Piece = {
 };
 
 const PIECES: Record<HeroArtVariant, Piece[]> = {
-  // Cajas, estibas y logística
+  // Productos: los tres símbolos del logo (como la marca de agua), en blanco translúcido.
   productos: [
-    { icon: Boxes, x: 58, y: 46, size: 300, rotate: -4, opacity: 0.34, float: 7 },
-    { icon: Package, x: 86, y: 18, size: 120, rotate: 10, opacity: 0.45, float: 5 },
-    { icon: Layers, x: 40, y: 12, size: 90, rotate: -8, opacity: 0.34, float: 6 },
-    { icon: Truck, x: 90, y: 72, size: 130, rotate: 0, opacity: 0.36, float: 8 },
-    { icon: Ruler, x: 30, y: 74, size: 80, rotate: 20, opacity: 0.34, float: 5.5 },
-    { icon: PackageCheck, x: 72, y: 80, size: 70, rotate: -6, opacity: 0.5, float: 6.5, accent: true },
+    { symbol: "recycle", x: 58, y: 46, size: 300, rotate: -6, opacity: 0.16, float: 7 },
+    { symbol: "leaf", x: 88, y: 20, size: 130, rotate: 10, opacity: 0.22, float: 5 },
+    { symbol: "cycle", x: 36, y: 14, size: 96, rotate: -10, opacity: 0.16, float: 6 },
+    { symbol: "cycle", x: 90, y: 74, size: 140, rotate: 6, opacity: 0.18, float: 8 },
+    { symbol: "leaf", x: 30, y: 76, size: 84, rotate: -14, opacity: 0.16, float: 5.5 },
+    { symbol: "recycle", x: 72, y: 82, size: 72, rotate: -6, opacity: 0.5, float: 6.5, accent: true },
   ],
-  // Bosque, equipo y compromiso
+  // Nosotros: los mismos símbolos en otra composición.
   nosotros: [
-    { icon: TreePine, x: 62, y: 44, size: 300, rotate: 0, opacity: 0.34, float: 8 },
-    { icon: Leaf, x: 88, y: 20, size: 130, rotate: 24, opacity: 0.5, float: 5 },
-    { icon: Handshake, x: 38, y: 76, size: 120, rotate: -6, opacity: 0.36, float: 6 },
-    { icon: Users, x: 90, y: 74, size: 100, rotate: 0, opacity: 0.36, float: 7 },
-    { icon: Award, x: 36, y: 14, size: 80, rotate: -10, opacity: 0.34, float: 5.5 },
-    { icon: ShieldCheck, x: 74, y: 82, size: 64, rotate: 8, opacity: 0.5, float: 6, accent: true },
+    { symbol: "cycle", x: 62, y: 44, size: 300, rotate: 4, opacity: 0.16, float: 8 },
+    { symbol: "recycle", x: 88, y: 20, size: 130, rotate: 14, opacity: 0.22, float: 5 },
+    { symbol: "leaf", x: 38, y: 76, size: 120, rotate: -8, opacity: 0.18, float: 6 },
+    { symbol: "recycle", x: 90, y: 76, size: 104, rotate: -4, opacity: 0.18, float: 7 },
+    { symbol: "leaf", x: 36, y: 14, size: 84, rotate: -12, opacity: 0.16, float: 5.5 },
+    { symbol: "cycle", x: 74, y: 84, size: 68, rotate: 8, opacity: 0.5, float: 6, accent: true },
   ],
   // Preguntas, ideas y comunidad
   foro: [
@@ -82,10 +74,23 @@ const PIECES: Record<HeroArtVariant, Piece[]> = {
 
 /**
  * Fondo decorativo para el hero de cada página: brillos verdes, textura de puntos,
- * anillos y dibujos de línea grandes (alusivos a la sección) que flotan suavemente.
+ * anillos y dibujos grandes que flotan suavemente: íconos de línea alusivos a la sección o,
+ * en productos y nosotros, los símbolos del logo oficial.
  * Va con `absolute inset-0` dentro de un hero `relative overflow-hidden`.
  * Las animaciones son CSS (fade-in + float en globals.css): no carga JavaScript.
  */
+/** Símbolo del logo (relleno con el color del texto). */
+function BrandSymbol({ symbol, className, style }: { symbol: WatermarkSymbol; className?: string; style?: CSSProperties }) {
+  const s = WATERMARK_SYMBOLS[symbol];
+  return (
+    <svg viewBox={s.viewBox} className={className} style={style}>
+      {s.paths.map((d, k) => (
+        <path key={k} d={d} fill="currentColor" />
+      ))}
+    </svg>
+  );
+}
+
 export default function HeroArt({ variant }: { variant: HeroArtVariant }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -103,7 +108,7 @@ export default function HeroArt({ variant }: { variant: HeroArtVariant }) {
 
       {/* Dibujos de línea (solo desde pantallas medianas) */}
       <div className="absolute inset-y-0 right-0 hidden w-[58%] md:block">
-        {PIECES[variant].map(({ icon: Icon, x, y, size, rotate = 0, opacity = 0.2, float = 6, accent }, i) => (
+        {PIECES[variant].map(({ icon: Icon, symbol, x, y, size, rotate = 0, opacity = 0.2, float = 6, accent }, i) => (
           // El contenedor aparece (fade-in) y el hijo flota; así cada animación usa su propio transform.
           <div
             key={i}
@@ -124,10 +129,16 @@ export default function HeroArt({ variant }: { variant: HeroArtVariant }) {
             >
             {accent ? (
               <span className="flex h-full w-full items-center justify-center rounded-full border border-lime/50 bg-brand/25 text-lime shadow-[0_0_40px_#1fb34a55]">
-                <Icon className="h-1/2 w-1/2" strokeWidth={1.4} />
+                {symbol ? (
+                  <BrandSymbol symbol={symbol} className="h-[55%] w-[55%]" />
+                ) : (
+                  Icon && <Icon className="h-1/2 w-1/2" strokeWidth={1.4} />
+                )}
               </span>
+            ) : symbol ? (
+              <BrandSymbol symbol={symbol} className="h-full w-full" style={{ opacity }} />
             ) : (
-              <Icon className="h-full w-full" strokeWidth={0.9} style={{ opacity }} />
+              Icon && <Icon className="h-full w-full" strokeWidth={0.9} style={{ opacity }} />
             )}
             </div>
           </div>

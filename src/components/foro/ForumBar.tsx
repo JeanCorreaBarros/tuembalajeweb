@@ -21,7 +21,7 @@ export default function ForumBar({ crumbs = [] }: { crumbs?: Crumb[] }) {
             <span key={`${c.label}-${i}`} className="flex min-w-0 items-center gap-1.5">
               {i > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/30" />}
               {c.href && !last ? (
-                <Link href={c.href} className="transition hover:text-lime">
+                <Link href={c.href} className="inline-block py-1.5 transition hover:text-lime">
                   {c.label}
                 </Link>
               ) : (

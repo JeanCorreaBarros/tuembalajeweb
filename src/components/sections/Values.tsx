@@ -3,6 +3,7 @@
 import { m } from "framer-motion";
 import { Eye, Handshake, Leaf, ShieldCheck, Target, Users } from "lucide-react";
 import Reveal from "../ui/Reveal";
+import Watermark from "../ui/Watermark";
 
 const mv = [
   {
@@ -26,7 +27,14 @@ const values = [
 
 export default function Values() {
   return (
-    <section className="bg-mist/70 py-12 sm:py-16">
+    <section className="relative isolate overflow-hidden bg-mist/70 py-12 sm:py-16">
+      <Watermark
+        tone="mist"
+        items={[
+          { symbol: "leaf", className: "-right-28 -top-10 w-[300px] rotate-12 md:-right-40 md:w-[500px]" },
+          { symbol: "recycle", className: "-left-28 bottom-0 w-[280px] -rotate-12 md:-left-40 md:w-[460px]" },
+        ]}
+      />
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <div className="grid gap-5 md:grid-cols-2">
           {mv.map(({ icon: Icon, title, text }, i) => (

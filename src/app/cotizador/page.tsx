@@ -5,6 +5,7 @@ import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
 import PageHeader from "@/components/sections/PageHeader";
 import JsonLd from "@/components/seo/JsonLd";
+import Watermark from "@/components/ui/Watermark";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -42,7 +43,14 @@ export default function CotizadorPage() {
           text="Ingresa las medidas, elige el tipo de estiba y el ensamble, y conoce el rango de referencia. Diseñamos gratis la solución que se ajuste a tu carga."
         />
 
-        <section className="bg-mist/60 py-10 sm:py-14">
+        <section className="relative isolate overflow-hidden bg-mist/60 py-10 sm:py-14">
+          <Watermark
+            tone="mist"
+            items={[
+              { symbol: "cycle", className: "-left-28 top-4 w-[300px] -rotate-6 md:-left-40 md:w-[520px]" },
+              { symbol: "recycle", className: "-right-24 bottom-0 w-[260px] rotate-12 md:-right-36 md:w-[460px]" },
+            ]}
+          />
           <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
             <Cotizador />
 
