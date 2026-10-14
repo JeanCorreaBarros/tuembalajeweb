@@ -7,7 +7,7 @@ import path from "node:path";
  * Base de datos SQLite (un solo archivo). Por defecto: ./data/foro.db
  * Cambia la ruta con la variable DATABASE_PATH. Haz respaldo copiando ese archivo.
  */
-const DB_PATH = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "foro.db");
+export const DB_PATH = process.env.DATABASE_PATH ?? path.join(process.cwd(), "data", "foro.db");
 const SCHEMA_PATH = path.join(process.cwd(), "src", "lib", "schema.sql");
 
 const g = globalThis as unknown as { __foroDb?: Database.Database };

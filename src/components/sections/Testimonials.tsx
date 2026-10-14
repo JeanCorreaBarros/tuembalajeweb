@@ -3,27 +3,10 @@
 import { AnimatePresence, m } from "framer-motion";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { IMAGES } from "@/lib/images";
+import { Lines } from "@/components/cms/Text";
+import type { CmsValues } from "@/lib/cms/pages";
 import Reveal from "../ui/Reveal";
 import SmartImage from "../ui/SmartImage";
-
-const testimonials = [
-  {
-    quote: "Excelente servicio y calidad en cada pedido. Los embalajes llegaron en perfecto estado y superaron nuestras expectativas.",
-    name: "Carlos Méndez",
-    role: "Gerente de Logística - Industrias del Norte",
-  },
-  {
-    quote: "Nos diseñaron una caja a la medida para maquinaria delicada. Cero daños en la exportación.",
-    name: "Laura Gómez",
-    role: "Directora de Operaciones - AgroExport",
-  },
-  {
-    quote: "Cumplen los tiempos y la madera viene certificada NIMF 15. Totalmente recomendados.",
-    name: "Andrés Rojas",
-    role: "Jefe de Compras - Comercial Andina",
-  },
-];
 
 const initials = (name: string) =>
   name
@@ -32,11 +15,13 @@ const initials = (name: string) =>
     .map((w) => w[0])
     .join("");
 
-export default function Testimonials() {
+/** Testimonios (editables en /admin: Inicio · Testimonios). */
+export default function Testimonials({ c }: { c: CmsValues<"inicio">["testimonios"] }) {
+  const testimonials = c.items;
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
-  const n = testimonials.length;
-  const t = testimonials[i];
+  const n = Math.max(1, testimonials.length);
+  const t = testimonials[i % n] ?? { quote: "", name: "", role: "" };
 
   useEffect(() => {
     if (paused) return;
@@ -53,7 +38,7 @@ export default function Testimonials() {
     <section className="relative isolate overflow-hidden bg-forest-dark text-white">
       {/* Fondo: cajas a la izquierda y bosque oscuro detrás del texto y la tarjeta. */}
       <div className="absolute inset-0 -z-20 [&_img]:object-[0%_45%]">
-        <SmartImage src={IMAGES.testimonialsBg} alt="" />
+        <SmartImage src={c.image} alt="" />
       </div>
       <div className="absolute inset-0 -z-10 bg-black/40 lg:bg-black/15" />
 
@@ -61,11 +46,10 @@ export default function Testimonials() {
         <div className="hidden lg:block" />
         <Reveal x={-40} y={0}>
           <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em]">
-            <span className="h-[3px] w-6 rounded bg-brand" /> Lo que dicen nuestros clientes
+            <span className="h-[3px] w-6 rounded bg-brand" /> {c.eyebrow}
           </p>
           <h2 className="mt-2 max-w-[540px] text-2xl font-extrabold leading-tight drop-shadow 2xl:text-[28px]">
-            La confianza de nuestros clientes
-            es nuestra mayor satisfacción
+            <Lines text={c.title} />
           </h2>
         </Reveal>
 

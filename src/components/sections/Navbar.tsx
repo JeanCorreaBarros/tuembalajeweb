@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, m } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Lock, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import Logo from "../ui/Logo";
-import { whatsappLink, WHATSAPP_ASESORIA } from "@/lib/site";
+import { useWhatsappLink } from "@/components/cms/SettingsProvider";
+import { WHATSAPP_ASESORIA } from "@/lib/site";
 import { WhatsAppIcon } from "../ui/icons";
 
 const links = [
@@ -25,6 +26,7 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const wa = useWhatsappLink();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -43,7 +45,7 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
       <div className="flex items-center justify-between px-5 lg:px-[6%]">
         <Logo size="sm" priority />
 
-        <nav className="hidden items-center gap-6 text-[12px] xl:gap-9 font-semibold text-white lg:flex">
+        <nav className="hidden items-center gap-4 text-[12px] font-semibold text-white lg:flex xl:gap-7 2xl:gap-9">
           {links.map(([label, href]) => (
             <Link
               key={href}
@@ -53,10 +55,19 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
               {label}
             </Link>
           ))}
+          {/* Portal de Clientes: todavía no está activo (sin enlace). */}
+          <span
+            role="link"
+            aria-disabled="true"
+            title="Próximamente"
+            className="inline-flex cursor-not-allowed items-center gap-1.5 whitespace-nowrap text-white/45"
+          >
+            <Lock className="h-3.5 w-3.5" aria-hidden /> Portal de Clientes
+          </span>
         </nav>
 
         <m.a
-          href={whatsappLink(WHATSAPP_ASESORIA)}
+          href={wa(WHATSAPP_ASESORIA)}
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.04 }}
@@ -86,7 +97,6 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
             className="max-h-[calc(100dvh-85px)] overflow-y-auto lg:hidden"
           >
             <ul className="mx-auto flex max-w-xl flex-col gap-1 px-5 pb-5 pt-3 text-[15px] font-semibold text-white">
-
               {links.map(([label, href]) => (
                 <li key={href}>
                   <Link
@@ -98,9 +108,23 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
                   </Link>
                 </li>
               ))}
+              <li>
+                <span
+                  role="link"
+                  aria-disabled="true"
+                  className="flex cursor-not-allowed items-center justify-between rounded-lg px-3 py-3 text-white/45"
+                >
+                  <span className="flex items-center gap-2">
+                    <Lock className="h-4 w-4" aria-hidden /> Portal de Clientes
+                  </span>
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
+                    Próximamente
+                  </span>
+                </span>
+              </li>
               <li className="pt-2">
                 <a
-                  href={whatsappLink(WHATSAPP_ASESORIA)}
+                  href={wa(WHATSAPP_ASESORIA)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-[13px] font-bold"

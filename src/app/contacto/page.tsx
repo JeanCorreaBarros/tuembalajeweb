@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowRight, Clock, Leaf, Mail, MapPin, Phone, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { Suspense } from "react";
 import ContactForm from "@/components/sections/ContactForm";
 import ContactHero from "@/components/sections/ContactHero";
@@ -9,30 +9,28 @@ import Reveal from "@/components/ui/Reveal";
 import Watermark from "@/components/ui/Watermark";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import JsonLd from "@/components/seo/JsonLd";
+import { iconFor } from "@/lib/cms/icons";
+import { getProducts } from "@/lib/cms/products";
+import { getSettings } from "@/lib/cms/settings";
+import { getPageContent } from "@/lib/cms/store";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
-import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Contacto y cotizaciones",
-  description:
-    "Solicita tu asesoría gratis y cotiza cajas de madera, estibas, pallets y embalajes especiales a tu medida. Escríbenos por WhatsApp o llámanos.",
-  path: "/contacto",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getSettings();
+  return pageMetadata({ title: seo.contactoTitle, description: seo.contactoDescription, path: "/contacto" });
+}
 
-const info = [
-  { icon: Phone, label: "Teléfono", value: SITE.phoneDisplay, sub: "Llámanos o escríbenos por WhatsApp", href: `tel:${SITE.phoneTel}` },
-  { icon: Mail, label: "Correo", value: SITE.email, sub: "Te respondemos en menos de 24 horas", href: `mailto:${SITE.email}` },
-  { icon: MapPin, label: "Ubicación", value: SITE.location, sub: "Envíos a todo el país" },
-  { icon: Clock, label: "Horario", value: SITE.schedule, sub: "¡Estamos para atenderte!" },
-];
+/** Contacto: textos en /admin (Páginas · Contacto); teléfonos, correos y horario en Ajustes generales. */
+export default async function ContactoPage() {
+  const [c, settings, products] = await Promise.all([getPageContent("contacto"), getSettings(), getProducts()]);
+  const t = c.tarjetas;
+  const info = [
+    { icon: Phone, label: "Teléfono", value: settings.phoneDisplay, sub: t.phoneSub, href: `tel:${settings.phoneTel}` },
+    { icon: Mail, label: "Correo", value: settings.email, sub: t.emailSub, href: `mailto:${settings.email}` },
+    { icon: MapPin, label: "Ubicación", value: settings.location, sub: t.locationSub },
+    { icon: Clock, label: "Horario", value: settings.schedule, sub: t.scheduleSub },
+  ].filter((x) => x.value);
 
-const trust = [
-  { icon: ShieldCheck, label: "Calidad garantizada" },
-  { icon: Truck, label: "Envíos a todo el país" },
-  { icon: Leaf, label: "Empaque responsable" },
-];
-
-export default function ContactoPage() {
   return (
     <>
       <JsonLd
@@ -43,7 +41,7 @@ export default function ContactoPage() {
       />
       <Navbar solid />
       <main>
-        <ContactHero />
+        <ContactHero c={c.encabezado} />
 
         <section className="relative isolate overflow-hidden bg-mist/60 py-12 lg:py-14">
           <Watermark
@@ -60,16 +58,21 @@ export default function ContactoPage() {
             <div className="min-w-0">
               <Reveal x={-30} y={0}>
                 <Suspense fallback={<div className="h-[520px] rounded-2xl bg-white shadow-xl" />}>
-                  <ContactForm />
+                  <ContactForm c={c.formulario} products={products.map(({ slug, title }) => ({ slug, title }))} />
                 </Suspense>
               </Reveal>
-              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-3 pl-2 sm:gap-x-8">
-                {trust.map(({ icon: Icon, label }) => (
-                  <li key={label} className="flex items-center gap-2 text-[11px] font-medium text-ink/60">
-                    <Icon className="h-5 w-5 text-forest" strokeWidth={1.4} /> {label}
-                  </li>
-                ))}
-              </ul>
+              {t.trust.length > 0 && (
+                <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-3 pl-2 sm:gap-x-8">
+                  {t.trust.map(({ icon, label }, i) => {
+                    const Icon = iconFor(icon);
+                    return (
+                      <li key={i} className="flex items-center gap-2 text-[11px] font-medium text-ink/60">
+                        <Icon className="h-5 w-5 text-forest" strokeWidth={1.4} /> {label}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
 
             {/* En tablet las tarjetas de contacto van en dos columnas; en celular y escritorio, una. */}
@@ -107,7 +110,7 @@ export default function ContactoPage() {
 
               <Reveal delay={0.35} x={30} y={0} className="md:col-span-2 lg:col-span-1">
                 <a
-                  href={`https://wa.me/${SITE.whatsapp}`}
+                  href={`https://wa.me/${settings.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-forest-dark to-forest-mid p-4 text-white shadow-lg transition hover:-translate-y-0.5"
@@ -115,16 +118,18 @@ export default function ContactoPage() {
                   <WhatsAppIcon className="h-9 w-9 text-lime" />
                   <span className="h-9 w-px bg-white/20" />
                   <span className="flex-1">
-                    <span className="block text-[13px] font-bold">Escríbenos directo por WhatsApp</span>
-                    <span className="block text-[11px] text-white/70">Te asesoramos en minutos</span>
+                    <span className="block text-[13px] font-bold">{t.whatsappTitle}</span>
+                    <span className="block text-[11px] text-white/70">{t.whatsappSub}</span>
                   </span>
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                 </a>
               </Reveal>
 
-              <p className="pr-2 text-right font-script text-lg text-forest-mid -rotate-2 md:col-span-2 lg:col-span-1">
-                Tu aliado en soluciones de embalaje
-              </p>
+              {t.script && (
+                <p className="pr-2 text-right font-script text-lg text-forest-mid -rotate-2 md:col-span-2 lg:col-span-1">
+                  {t.script}
+                </p>
+              )}
             </div>
           </div>
         </section>

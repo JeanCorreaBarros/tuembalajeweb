@@ -5,42 +5,47 @@ import Navbar from "@/components/sections/Navbar";
 import ProductCatalog from "@/components/sections/ProductCatalog";
 import ProductsHeader from "@/components/sections/ProductsHeader";
 import JsonLd from "@/components/seo/JsonLd";
-import { PRODUCTS } from "@/lib/products";
+import { getProducts } from "@/lib/cms/products";
+import { getSettings } from "@/lib/cms/settings";
+import { getPageContent } from "@/lib/cms/store";
+import type { Product } from "@/lib/products";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Cajas de madera, estibas y pallets a la medida",
-  description:
-    "Cajas de madera, estibas, pallets, huacales y embalajes especiales a la medida. Madera reforestada con certificación NIMF 15, apta para exportación.",
-  path: "/productos",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getSettings();
+  return pageMetadata({ title: seo.productosTitle, description: seo.productosDescription, path: "/productos" });
+}
 
 /** Catálogo para Google: cada producto como servicio ofrecido por la empresa. */
-const catalog = {
-  "@context": "https://schema.org",
-  "@type": "ItemList",
-  name: "Productos y servicios de Tu Embalaje",
-  itemListElement: PRODUCTS.map((p, i) => ({
-    "@type": "ListItem",
-    position: i + 1,
-    item: {
-      "@type": "Service",
-      name: p.title,
-      description: p.intro ?? p.short,
-      image: `${SITE.url}${p.image}`,
-      url: `${SITE.url}/productos#${p.slug}`,
-      serviceType: "Embalaje en madera",
-      areaServed: "CO",
-      provider: { "@id": `${SITE.url}/#empresa` },
-    },
-  })),
-};
+function catalog(products: Product[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Productos y servicios de Tu Embalaje",
+    itemListElement: products.map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "Service",
+        name: p.title,
+        description: p.intro ?? p.short,
+        image: `${SITE.url}${p.image}`,
+        url: `${SITE.url}/productos#${p.slug}`,
+        serviceType: "Embalaje en madera",
+        areaServed: "CO",
+        provider: { "@id": `${SITE.url}/#empresa` },
+      },
+    })),
+  };
+}
 
-export default function ProductosPage() {
+/** Productos: encabezado en /admin (Páginas · Productos) y catálogo en /admin (Productos). */
+export default async function ProductosPage() {
+  const [c, home, products] = await Promise.all([getPageContent("productos"), getPageContent("inicio"), getProducts()]);
   return (
     <>
-      <JsonLd data={catalog} />
+      <JsonLd data={catalog(products)} />
       <JsonLd
         data={breadcrumbs([
           { name: "Inicio", path: "/" },
@@ -49,9 +54,9 @@ export default function ProductosPage() {
       />
       <Navbar solid />
       <main>
-        <ProductsHeader />
-        <ProductCatalog products={PRODUCTS} />
-        <CTA />
+        <ProductsHeader c={c.encabezado} />
+        <ProductCatalog products={products} />
+        <CTA c={home.cta} />
       </main>
       <Footer />
     </>

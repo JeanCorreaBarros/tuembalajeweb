@@ -32,7 +32,7 @@ import {
   type View,
 } from "@/lib/forum";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
-import { SITE } from "@/lib/site";
+import { getSettings } from "@/lib/cms/settings";
 import JsonLd from "@/components/seo/JsonLd";
 
 // Los filtros (?q=, ?categoria=, ?pagina=) apuntan a /foro como URL canónica: evita contenido duplicado.
@@ -96,6 +96,7 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
 
   const { rows, total, pages } = listQuestions({ q, category: categoria, view: vista, page });
   const s = stats();
+  const settings = await getSettings();
   const counts = categoryCounts();
   const members = topMembers();
   const filtered = !!(q || categoria || vista !== "recientes");
@@ -381,7 +382,7 @@ async function ForoList({ searchParams }: { searchParams: SP }) {
           </section>
 
           <a
-            href={`https://wa.me/${SITE.whatsapp}`}
+            href={`https://wa.me/${settings.whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 rounded-3xl bg-forest-dark p-5 text-white transition hover:bg-forest"

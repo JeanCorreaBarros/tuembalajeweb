@@ -4,7 +4,7 @@ import { Calculator, PackageSearch, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PRODUCT_CATEGORIES, type Product, type ProductCategory } from "@/lib/products";
-import { whatsappLink } from "@/lib/site";
+import { useWhatsappLink } from "@/components/cms/SettingsProvider";
 import { WhatsAppIcon } from "../ui/icons";
 import ProductDetail from "./ProductDetail";
 
@@ -44,6 +44,7 @@ const SUGGESTIONS = ["4 entradas", "tacos", "NIMF 15", "huacales", "piso cerrado
 export default function ProductCatalog({ products }: { products: Product[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("todos");
+  const whatsappLink = useWhatsappLink();
 
   // Lee la búsqueda de la URL al entrar (enlace compartido).
   useEffect(() => {

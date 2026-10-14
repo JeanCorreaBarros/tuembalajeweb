@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Highlight } from "@/components/cms/Text";
 import About from "@/components/sections/About";
 import Commitment from "@/components/sections/Commitment";
 import CTA from "@/components/sections/CTA";
@@ -11,16 +12,18 @@ import Stats from "@/components/sections/Stats";
 import Testimonials from "@/components/sections/Testimonials";
 import Values from "@/components/sections/Values";
 import JsonLd from "@/components/seo/JsonLd";
+import { getSettings } from "@/lib/cms/settings";
+import { getPageContent } from "@/lib/cms/store";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Nosotros: fabricantes de embalajes en madera",
-  description:
-    "Conoce a Tu Embalaje: diseñamos y fabricamos embalajes en madera a la medida, con madera certificada NIMF 15, servicio personalizado y compromiso ambiental.",
-  path: "/nosotros",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getSettings();
+  return pageMetadata({ title: seo.nosotrosTitle, description: seo.nosotrosDescription, path: "/nosotros" });
+}
 
-export default function NosotrosPage() {
+/** Nosotros: encabezado y valores en /admin (Páginas · Nosotros); el resto se comparte con Inicio. */
+export default async function NosotrosPage() {
+  const [c, home] = await Promise.all([getPageContent("nosotros"), getPageContent("inicio")]);
   return (
     <>
       <JsonLd
@@ -31,23 +34,15 @@ export default function NosotrosPage() {
       />
       <Navbar solid />
       <main>
-        <PageHeader
-          eyebrow="Nosotros"
-          title={
-            <>
-              Más que embalajes, <span className="text-lime">soluciones que protegen</span>
-            </>
-          }
-          text="Combinamos experiencia, calidad y sostenibilidad para que tus productos lleguen seguros a su destino."
-        />
-        <About watermark />
-        <Values />
-        <Stats />
-        <Process />
-        <Commitment />
-        <Industries />
-        <Testimonials />
-        <CTA />
+        <PageHeader eyebrow={c.encabezado.eyebrow} title={<Highlight text={c.encabezado.title} />} text={c.encabezado.text} />
+        <About c={home.nosotros} watermark />
+        <Values c={c.valores} />
+        <Stats c={home.cifras} />
+        <Process c={home.proceso} />
+        <Commitment c={home.compromiso} />
+        <Industries c={home.sectores} />
+        <Testimonials c={home.testimonios} />
+        <CTA c={home.cta} />
       </main>
       <Footer />
     </>

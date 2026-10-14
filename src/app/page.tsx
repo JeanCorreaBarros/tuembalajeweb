@@ -10,25 +10,32 @@ import Process from "@/components/sections/Process";
 import Products from "@/components/sections/Products";
 import Stats from "@/components/sections/Stats";
 import Testimonials from "@/components/sections/Testimonials";
+import { getProducts } from "@/lib/cms/products";
+import { getSettings } from "@/lib/cms/settings";
+import { getPageContent } from "@/lib/cms/store";
 import { pageMetadata } from "@/lib/seo";
-import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = pageMetadata({ description: SITE.description, path: "/" });
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getSettings();
+  return pageMetadata({ absoluteTitle: seo.homeTitle, description: seo.homeDescription, path: "/" });
+}
 
-export default function Home() {
+/** Inicio: todo el contenido se edita en /admin (Páginas · Inicio). */
+export default async function Home() {
+  const [c, products] = await Promise.all([getPageContent("inicio"), getProducts()]);
   return (
     <>
       <Navbar />
       <main>
-        <Hero />
-        <Stats />
-        <About />
-        <Products />
-        <Process />
-        <Commitment />
-        <Industries />
-        <Testimonials />
-        <CTA />
+        <Hero c={c.hero} />
+        <Stats c={c.cifras} />
+        <About c={c.nosotros} />
+        <Products c={c.productos} products={products.filter((p) => p.featured)} />
+        <Process c={c.proceso} />
+        <Commitment c={c.compromiso} />
+        <Industries c={c.sectores} />
+        <Testimonials c={c.testimonios} />
+        <CTA c={c.cta} />
       </main>
       <Footer />
     </>

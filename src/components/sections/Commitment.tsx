@@ -1,16 +1,12 @@
 "use client";
 
 import { m } from "framer-motion";
-import { BadgeCheck, Leaf, Recycle, ShieldCheck } from "lucide-react";
-import { IMAGES } from "@/lib/images";
+import { Leaf } from "lucide-react";
+import { Lines } from "@/components/cms/Text";
+import { iconFor } from "@/lib/cms/icons";
+import type { CmsValues } from "@/lib/cms/pages";
 import Reveal from "../ui/Reveal";
 import SmartImage from "../ui/SmartImage";
-
-const badges = [
-  { icon: BadgeCheck, label: "Madera certificada\ncon NIMF 15" },
-  { icon: ShieldCheck, label: "Uso responsable\nde recursos" },
-  { icon: Recycle, label: "Reutilización\nde materiales" },
-];
 
 /*
  * Pincelada verde: varias pasadas horizontales de distinto largo (así los extremos quedan
@@ -80,11 +76,12 @@ function BrushStroke() {
   );
 }
 
-export default function Commitment() {
+/** «Nuestro compromiso» (editable en /admin: Inicio · Nuestro compromiso). */
+export default function Commitment({ c }: { c: CmsValues<"inicio">["compromiso"] }) {
   return (
     <section className="relative isolate overflow-hidden">
       <div className="absolute inset-0 -z-20 [&_img]:object-[50%_32%]">
-        <SmartImage src={IMAGES.commitmentBg} alt="Manos sosteniendo una planta joven frente a un bosque" />
+        <SmartImage src={c.image} alt="Manos sosteniendo una planta joven frente a un bosque" />
       </div>
       {/* Aclara solo la franja central para leer el texto; la planta y el bosque quedan nítidos. */}
       <div className="absolute inset-0 -z-10 bg-white/70 lg:bg-transparent lg:bg-[linear-gradient(to_right,transparent_0%,transparent_22%,rgba(255,255,255,0.62)_34%,rgba(255,255,255,0.62)_58%,transparent_74%)]" />
@@ -93,20 +90,19 @@ export default function Commitment() {
         <div className="hidden lg:block" />
 
         <Reveal>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-dark">Nuestro compromiso</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-dark">{c.eyebrow}</p>
           <h2 className="mt-2 text-3xl font-extrabold leading-[1.15] text-forest-dark xl:text-[34px]">
-            Cuidamos el planeta
-            <br />
-            en cada embalaje
+            <Lines text={c.title} />
           </h2>
           <p className="mt-3 max-w-[440px] text-[14px] leading-relaxed text-ink/75">
-            Utilizamos madera de origen responsable y procesos sostenibles que reducen el impacto ambiental, porque
-            creemos en un futuro más verde.
+            {c.text}
           </p>
           <ul className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 min-[400px]:grid-cols-2 lg:flex lg:flex-wrap">
-            {badges.map(({ icon: Icon, label }, i) => (
+            {c.badges.map(({ icon, label }, i) => {
+              const Icon = iconFor(icon);
+              return (
               <m.li
-                key={label}
+                key={i}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -116,9 +112,10 @@ export default function Commitment() {
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-forest text-white shadow-md shadow-forest/30">
                   <Icon className="h-5 w-5" />
                 </span>
-                <span className="whitespace-pre text-[12px] font-semibold leading-tight text-forest-dark">{label}</span>
+                <span className="whitespace-pre-line text-[12px] font-semibold leading-tight text-forest-dark">{label}</span>
               </m.li>
-            ))}
+              );
+            })}
           </ul>
         </Reveal>
 
@@ -132,11 +129,7 @@ export default function Commitment() {
           <BrushStroke />
           <div className="relative flex h-full items-center justify-center gap-[3%] px-[11%] pb-1">
             <p className="font-[family-name:var(--font-hand)] text-[clamp(25px,7.6vw,32px)] font-bold leading-[1.02] text-white [text-shadow:0_1px_2px_rgba(6,42,28,0.25)] md:text-[27px] lg:text-[29px] xl:text-[33px]">
-              Pequeñas acciones
-              <br />
-              también hacen
-              <br />
-              grandes cambios
+              <Lines text={c.brush} />
               {/* Subrayado de pincel, más grueso al centro. */}
               <svg viewBox="0 0 220 18" className="-mt-0.5 h-[0.5em] w-[88%] text-lime" fill="none" aria-hidden>
                 <m.path

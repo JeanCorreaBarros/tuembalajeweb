@@ -48,4 +48,5 @@ VOLUME ["/app/data"]
 
 USER node
 EXPOSE 3000
-CMD ["node", "server.js"]
+# start.mjs inicia server.js y, al arrancar, sincroniza las páginas con lo guardado en el panel (/admin).
+CMD ["node", "scripts/start.mjs"]

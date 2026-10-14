@@ -1,13 +1,7 @@
 /**
- * Parámetros del cotizador de estibas. Cambia aquí medidas estándar, precios y textos:
- * la página /cotizador se actualiza sola.
+ * Cotizador de estibas: tipos de estiba y ensamble (fijos) y la configuración que llega del panel
+ * (/admin · Páginas · Cotizador): medidas estándar, precios de referencia y mensajes.
  */
-
-/** Medidas estándar (cm). Fuera de este rango la estiba requiere diseño especial. */
-export const MEDIDAS = {
-  largo: { min: 50, max: 150 },
-  ancho: { min: 50, max: 150 },
-} as const;
 
 export const TIPOS_ESTIBA = [
   { slug: "listones", label: "Listones", desc: "Tablas paralelas sobre largueros" },
@@ -22,34 +16,48 @@ export const ENSAMBLES = [
 export type TipoEstiba = (typeof TIPOS_ESTIBA)[number]["slug"];
 export type Ensamble = (typeof ENSAMBLES)[number]["slug"];
 
-/** Rango de precio de referencia (COP) según ensamble y tipo de estiba. */
-export const PRECIOS: Record<Ensamble, Record<TipoEstiba, { min: number; max: number }>> = {
-  puntillas: {
-    listones: { min: 28_000, max: 100_000 },
-    tacos: { min: 34_000, max: 120_000 },
-  },
-  "puntillas-tornillos": {
-    listones: { min: 70_000, max: 250_000 },
-    tacos: { min: 28_000, max: 100_000 },
-  },
+type Rango = { min: number; max: number };
+
+export type CotizadorConfig = {
+  medidas: { largo: Rango; ancho: Rango };
+  precios: Record<Ensamble, Record<TipoEstiba, Rango>>;
+  mensajes: {
+    dentro: { titulo: string; texto: string };
+    fuera: { titulo: string; texto: string };
+    cta: string;
+  };
 };
 
-export const MENSAJES = {
-  dentro: {
-    titulo: "Este rango es el punto de partida. Tu embalaje puede ser a la medida.",
-    texto:
-      "Déjanos tus datos y diseñamos gratis la solución que se ajuste a tu carga y en menos de 24 horas un asesor te contacta con una propuesta ajustada.",
-  },
-  fuera: {
-    titulo: "Esto se sale de lo estándar, y es justo lo que mejor sabemos hacer.",
-    texto:
-      "Las estibas con estas medidas requieren un diseño especial. Déjanos tus datos y en menos de 24 horas un asesor te contacta para estudiar tu caso, sin compromiso.",
-  },
-  cta: "Recibir propuesta a medida",
-} as const;
+/** Arma la configuración a partir de lo guardado en el panel. */
+export function cotizadorConfig(c: {
+  medidas: { largoMin: number; largoMax: number; anchoMin: number; anchoMax: number };
+  precios: Record<string, number>;
+  mensajes: { dentroTitulo: string; dentroTexto: string; fueraTitulo: string; fueraTexto: string; cta: string };
+}): CotizadorConfig {
+  const p = c.precios;
+  const r = (min: number, max: number): Rango => ({ min: Math.min(min, max), max: Math.max(min, max) });
+  return {
+    medidas: { largo: r(c.medidas.largoMin, c.medidas.largoMax), ancho: r(c.medidas.anchoMin, c.medidas.anchoMax) },
+    precios: {
+      puntillas: {
+        listones: r(p.puntillasListonesMin, p.puntillasListonesMax),
+        tacos: r(p.puntillasTacosMin, p.puntillasTacosMax),
+      },
+      "puntillas-tornillos": {
+        listones: r(p.tornillosListonesMin, p.tornillosListonesMax),
+        tacos: r(p.tornillosTacosMin, p.tornillosTacosMax),
+      },
+    },
+    mensajes: {
+      dentro: { titulo: c.mensajes.dentroTitulo, texto: c.mensajes.dentroTexto },
+      fuera: { titulo: c.mensajes.fueraTitulo, texto: c.mensajes.fueraTexto },
+      cta: c.mensajes.cta,
+    },
+  };
+}
 
-export const dentroDeRango = (largo: number, ancho: number) =>
-  largo >= MEDIDAS.largo.min && largo <= MEDIDAS.largo.max && ancho >= MEDIDAS.ancho.min && ancho <= MEDIDAS.ancho.max;
+export const dentroDeRango = (m: CotizadorConfig["medidas"], largo: number, ancho: number) =>
+  largo >= m.largo.min && largo <= m.largo.max && ancho >= m.ancho.min && ancho <= m.ancho.max;
 
 export const formatoCOP = (n: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);

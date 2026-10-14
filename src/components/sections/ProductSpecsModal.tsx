@@ -24,7 +24,7 @@ import {
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { PRODUCT_CATEGORIES, type Product } from "@/lib/products";
-import { whatsappLink } from "@/lib/site";
+import { useWhatsappLink } from "@/components/cms/SettingsProvider";
 import { WhatsAppIcon } from "../ui/icons";
 import SmartImage from "../ui/SmartImage";
 
@@ -65,6 +65,7 @@ export default function ProductSpecsModal({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const whatsappLink = useWhatsappLink();
 
   useEffect(() => {
     const d = ref.current;

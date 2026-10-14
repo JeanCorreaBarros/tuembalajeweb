@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
-import { Clock, PencilRuler, ShieldCheck } from "lucide-react";
 import Cotizador from "@/components/cotizador/Cotizador";
+import { Highlight } from "@/components/cms/Text";
 import Footer from "@/components/sections/Footer";
 import Navbar from "@/components/sections/Navbar";
 import PageHeader from "@/components/sections/PageHeader";
 import JsonLd from "@/components/seo/JsonLd";
 import Watermark from "@/components/ui/Watermark";
+import { iconFor } from "@/lib/cms/icons";
+import { getSettings } from "@/lib/cms/settings";
+import { getPageContent } from "@/lib/cms/store";
+import { cotizadorConfig } from "@/lib/cotizador";
 import { breadcrumbs, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Cotizador de estibas de madera",
-  description:
-    "Cotiza tu estiba de madera en línea: ingresa medidas, tipo (listones o tacos) y ensamble, y recibe gratis una propuesta a medida en menos de 24 horas.",
-  path: "/cotizador",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const { seo } = await getSettings();
+  return pageMetadata({ title: seo.cotizadorTitle, description: seo.cotizadorDescription, path: "/cotizador" });
+}
 
-const perks = [
-  { icon: PencilRuler, label: "Diseño a medida gratis" },
-  { icon: Clock, label: "Respuesta en menos de 24 h" },
-  { icon: ShieldCheck, label: "Madera certificada NIMF 15" },
-];
-
-export default function CotizadorPage() {
+/** Cotizador: textos, medidas, precios y mensajes en /admin (Páginas · Cotizador). */
+export default async function CotizadorPage() {
+  const c = await getPageContent("cotizador");
+  const h = c.encabezado;
   return (
     <>
       <JsonLd
@@ -32,16 +31,7 @@ export default function CotizadorPage() {
       />
       <Navbar solid />
       <main>
-        <PageHeader
-          art="productos"
-          eyebrow="Cotizador de estibas"
-          title={
-            <>
-              Cotiza tu estiba <span className="text-lime">en segundos</span>
-            </>
-          }
-          text="Ingresa las medidas, elige el tipo de estiba y el ensamble, y conoce el rango de referencia. Diseñamos gratis la solución que se ajuste a tu carga."
-        />
+        <PageHeader art="productos" eyebrow={h.eyebrow} title={<Highlight text={h.title} />} text={h.text} />
 
         <section className="relative isolate overflow-hidden bg-mist/60 py-10 sm:py-14">
           <Watermark
@@ -52,15 +42,20 @@ export default function CotizadorPage() {
             ]}
           />
           <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
-            <Cotizador />
+            <Cotizador config={cotizadorConfig(c)} />
 
-            <ul className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3">
-              {perks.map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-2 text-[13px] font-semibold text-forest-dark/80">
-                  <Icon className="h-5 w-5 text-brand" aria-hidden /> {label}
-                </li>
-              ))}
-            </ul>
+            {h.perks.length > 0 && (
+              <ul className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3">
+                {h.perks.map(({ icon, label }, i) => {
+                  const Icon = iconFor(icon);
+                  return (
+                    <li key={i} className="flex items-center gap-2 text-[13px] font-semibold text-forest-dark/80">
+                      <Icon className="h-5 w-5 text-brand" aria-hidden /> {label}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </section>
       </main>

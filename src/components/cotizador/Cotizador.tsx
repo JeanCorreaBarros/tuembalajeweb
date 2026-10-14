@@ -3,18 +3,16 @@
 import { AlertTriangle, ArrowRight, Building2, CheckCircle2, Lock, Mail, Phone, Ruler, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { useSettings } from "@/components/cms/SettingsProvider";
 import {
   dentroDeRango,
   ENSAMBLES,
   formatoCOP,
-  MEDIDAS,
-  MENSAJES,
-  PRECIOS,
   TIPOS_ESTIBA,
+  type CotizadorConfig,
   type Ensamble,
   type TipoEstiba,
 } from "@/lib/cotizador";
-import { SITE } from "@/lib/site";
 import { WhatsAppIcon } from "../ui/icons";
 
 // 16px en celular: con menos, iOS hace zoom al tocar el campo.
@@ -108,7 +106,10 @@ function Options<T extends string>({
   );
 }
 
-export default function Cotizador() {
+/** Cotizador de estibas. Medidas, precios y mensajes llegan del panel (/admin · Cotizador). */
+export default function Cotizador({ config }: { config: CotizadorConfig }) {
+  const { whatsapp } = useSettings();
+  const { medidas: MEDIDAS, precios: PRECIOS, mensajes: MENSAJES } = config;
   const [largo, setLargo] = useState("");
   const [ancho, setAncho] = useState("");
   const [tipo, setTipo] = useState<TipoEstiba>(TIPOS_ESTIBA[0].slug);
@@ -118,7 +119,7 @@ export default function Cotizador() {
   const l = Number.parseFloat(largo.replace(",", "."));
   const a = Number.parseFloat(ancho.replace(",", "."));
   const listo = l > 0 && a > 0;
-  const estandar = listo && dentroDeRango(l, a);
+  const estandar = listo && dentroDeRango(MEDIDAS, l, a);
   const precio = PRECIOS[ensamble][tipo];
   const tipoLabel = TIPOS_ESTIBA.find((t) => t.slug === tipo)!.label;
   const ensambleLabel = ENSAMBLES.find((e) => e.slug === ensamble)!.label;
@@ -138,7 +139,7 @@ export default function Cotizador() {
       `Teléfono/WhatsApp: ${d.get("telefono")}`,
       `Correo: ${d.get("correo")}`,
     ].join("\n");
-    window.open(`https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     setSent(true);
   }
 

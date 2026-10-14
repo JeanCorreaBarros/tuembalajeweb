@@ -4,7 +4,10 @@ import { Suspense } from "react";
 import JsonLd from "@/components/seo/JsonLd";
 import MotionProvider from "@/components/ui/MotionProvider";
 import ScrollToTop from "@/components/ui/ScrollToTop";
-import { PRODUCTS } from "@/lib/products";
+import { SettingsProvider } from "@/components/cms/SettingsProvider";
+import { getProducts } from "@/lib/cms/products";
+import { getSettings, type Settings } from "@/lib/cms/settings";
+import type { Product } from "@/lib/products";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -61,66 +64,65 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-/** Datos de la empresa para Google (panel de negocio, logo, contacto, catálogo). */
-const organization = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": ["Organization", "LocalBusiness"],
-      "@id": `${SITE.url}/#empresa`,
-      name: SITE.name,
-      legalName: SITE.legalName,
-      url: SITE.url,
-      logo: `${SITE.url}/logo/tu-embalaje-color.png`,
-      image: `${SITE.url}/opengraph-image`,
-      description: SITE.description,
-      email: SITE.email,
-      telephone: SITE.phoneTel,
-      address: { "@type": "PostalAddress", addressCountry: "CO" },
-      areaServed: { "@type": "Country", name: "Colombia" },
-      openingHoursSpecification: {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-        opens: "07:30",
-        closes: "17:30",
-      },
-      contactPoint: SITE.phones.map((p) => ({
-        "@type": "ContactPoint",
-        telephone: p.tel,
-        contactType: "sales",
-        areaServed: "CO",
-        availableLanguage: "Spanish",
-      })),
-      sameAs: [SITE.instagram.url],
-      hasOfferCatalog: {
-        "@type": "OfferCatalog",
-        name: "Embalajes en madera",
-        itemListElement: PRODUCTS.map((p) => ({
-          "@type": "Offer",
-          itemOffered: { "@type": "Service", name: p.title, description: p.short, url: `${SITE.url}/productos#${p.slug}` },
+/** Datos de la empresa para Google (panel de negocio, logo, contacto, catálogo), desde lo editable en /admin. */
+function organization(settings: Settings, products: Product[]) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["Organization", "LocalBusiness"],
+        "@id": `${SITE.url}/#empresa`,
+        name: SITE.name,
+        legalName: settings.legalName,
+        url: SITE.url,
+        logo: `${SITE.url}/logo/tu-embalaje-color.png`,
+        image: `${SITE.url}/opengraph-image`,
+        description: settings.seo.homeDescription,
+        email: settings.email,
+        telephone: settings.phoneTel,
+        address: { "@type": "PostalAddress", addressCountry: "CO", ...(settings.address ? { streetAddress: settings.address } : {}) },
+        areaServed: { "@type": "Country", name: "Colombia" },
+        contactPoint: settings.phones.map((p) => ({
+          "@type": "ContactPoint",
+          telephone: p.tel,
+          contactType: "sales",
+          areaServed: "CO",
+          availableLanguage: "Spanish",
         })),
+        sameAs: settings.instagram.url ? [settings.instagram.url] : [],
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: "Embalajes en madera",
+          itemListElement: products.map((p) => ({
+            "@type": "Offer",
+            itemOffered: { "@type": "Service", name: p.title, description: p.short, url: `${SITE.url}/productos#${p.slug}` },
+          })),
+        },
       },
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${SITE.url}/#sitio`,
-      url: SITE.url,
-      name: SITE.name,
-      inLanguage: "es-CO",
-      publisher: { "@id": `${SITE.url}/#empresa` },
-    },
-  ],
-};
+      {
+        "@type": "WebSite",
+        "@id": `${SITE.url}/#sitio`,
+        url: SITE.url,
+        name: SITE.name,
+        inLanguage: "es-CO",
+        publisher: { "@id": `${SITE.url}/#empresa` },
+      },
+    ],
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const [settings, products] = await Promise.all([getSettings(), getProducts()]);
   return (
     <html lang="es-CO" className={`${montserrat.variable} ${script.variable} ${hand.variable} antialiased`}>
       <body className="min-h-screen overflow-x-hidden">
-        <JsonLd data={organization} />
+        <JsonLd data={organization(settings, products)} />
         <Suspense fallback={null}>
           <ScrollToTop />
         </Suspense>
-        <MotionProvider>{children}</MotionProvider>
+        <SettingsProvider value={settings}>
+          <MotionProvider>{children}</MotionProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

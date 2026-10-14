@@ -3,7 +3,8 @@
 import { m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { whatsappLink, WHATSAPP_ASESORIA } from "@/lib/site";
+import { useWhatsappLink } from "@/components/cms/SettingsProvider";
+import { WHATSAPP_ASESORIA } from "@/lib/site";
 import { WhatsAppIcon } from "./icons";
 
 type Props = {
@@ -34,8 +35,9 @@ export default function Button({
   size = "md",
   className = "",
 }: Props) {
+  const wa = useWhatsappLink();
   const toWhatsApp = whatsapp && !href;
-  const target = toWhatsApp ? whatsappLink(WHATSAPP_ASESORIA) : (href ?? "/contacto");
+  const target = toWhatsApp ? wa(WHATSAPP_ASESORIA) : (href ?? "/contacto");
   return (
     <m.a
       href={target}

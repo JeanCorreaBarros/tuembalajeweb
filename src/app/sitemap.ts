@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { sitemapQuestions } from "@/lib/forum";
-import { PRODUCTS } from "@/lib/products";
+import { readProducts } from "@/lib/cms/products";
 import { SITE } from "@/lib/site";
 
 /** Mapa del sitio para Google. Se genera en cada petición para incluir las preguntas nuevas del foro. */
@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.9,
-      images: PRODUCTS.map((p) => u(p.image)),
+      images: readProducts().map((p) => u(p.image)),
     },
     { url: u("/nosotros"), lastModified: now, changeFrequency: "yearly", priority: 0.7 },
     { url: u("/cotizador"), lastModified: now, changeFrequency: "monthly", priority: 0.9 },

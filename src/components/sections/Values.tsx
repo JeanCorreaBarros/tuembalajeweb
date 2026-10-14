@@ -1,31 +1,19 @@
 "use client";
 
 import { m } from "framer-motion";
-import { Eye, Handshake, Leaf, ShieldCheck, Target, Users } from "lucide-react";
+import { Eye, Target } from "lucide-react";
+import { iconFor } from "@/lib/cms/icons";
+import type { CmsValues } from "@/lib/cms/pages";
 import Reveal from "../ui/Reveal";
 import Watermark from "../ui/Watermark";
 
-const mv = [
-  {
-    icon: Target,
-    title: "Misión",
-    text: "Diseñar y fabricar embalajes en madera a la medida, que protejan los productos de nuestros clientes con calidad, cumplimiento y responsabilidad ambiental.",
-  },
-  {
-    icon: Eye,
-    title: "Visión",
-    text: "Ser el aliado de embalaje más confiable de la industria colombiana, reconocido por su calidad, su servicio personalizado y su compromiso con la sostenibilidad.",
-  },
-];
+/** Misión, visión y valores (editables en /admin: Nosotros · Misión, visión y valores). */
+export default function Values({ c }: { c: CmsValues<"nosotros">["valores"] }) {
+  const mv = [
+    { icon: Target, title: "Misión", text: c.mision },
+    { icon: Eye, title: "Visión", text: c.vision },
+  ].filter((x) => x.text.trim());
 
-const values = [
-  { icon: ShieldCheck, title: "Calidad", text: "Cada embalaje se fabrica para resistir el viaje." },
-  { icon: Leaf, title: "Sostenibilidad", text: "Madera reforestada y certificada NIMF 15." },
-  { icon: Handshake, title: "Confianza", text: "Cumplimos lo que prometemos, a tiempo." },
-  { icon: Users, title: "Servicio", text: "Asesoría cercana y personalizada en cada proyecto." },
-];
-
-export default function Values() {
   return (
     <section className="relative isolate overflow-hidden bg-mist/70 py-12 sm:py-16">
       <Watermark
@@ -50,25 +38,29 @@ export default function Values() {
           ))}
         </div>
 
-        <Reveal className="mt-14">
-          <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-forest">
-            <span className="h-[3px] w-6 rounded bg-brand" /> Nuestros valores
-          </p>
-        </Reveal>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {values.map(({ icon: Icon, title, text }, i) => (
-            <Reveal key={title} delay={i * 0.1}>
-              <m.div
-                whileHover={{ y: -6 }}
-                className="h-full rounded-2xl bg-forest p-4 text-white shadow-lg sm:p-6"
-              >
-                <Icon className="h-8 w-8 text-lime" strokeWidth={1.4} />
-                <h3 className="mt-4 text-[15px] font-bold">{title}</h3>
-                <p className="mt-1.5 text-[12px] leading-snug text-white/70">{text}</p>
-              </m.div>
+        {c.values.length > 0 && (
+          <>
+            <Reveal className="mt-14">
+              <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-forest">
+                <span className="h-[3px] w-6 rounded bg-brand" /> {c.eyebrow}
+              </p>
             </Reveal>
-          ))}
-        </div>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {c.values.map(({ icon, title, text }, i) => {
+                const Icon = iconFor(icon);
+                return (
+                  <Reveal key={i} delay={i * 0.1}>
+                    <m.div whileHover={{ y: -6 }} className="h-full rounded-2xl bg-forest p-4 text-white shadow-lg sm:p-6">
+                      <Icon className="h-8 w-8 text-lime" strokeWidth={1.4} />
+                      <h3 className="mt-4 text-[15px] font-bold">{title}</h3>
+                      <p className="mt-1.5 text-[12px] leading-snug text-white/70">{text}</p>
+                    </m.div>
+                  </Reveal>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

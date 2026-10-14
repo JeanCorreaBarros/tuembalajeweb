@@ -16,8 +16,9 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { PRODUCTS } from "@/lib/products";
-import { SITE } from "@/lib/site";
+import { useSettings } from "@/components/cms/SettingsProvider";
+import { Highlight } from "@/components/cms/Text";
+import type { CmsValues } from "@/lib/cms/pages";
 import { WhatsAppIcon } from "../ui/icons";
 
 // En celular el texto va a 16px: con menos, iOS hace zoom al tocar el campo.
@@ -33,7 +34,15 @@ function Field({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   );
 }
 
-export default function ContactForm() {
+/** Formulario de asesoría (textos en /admin: Contacto · Formulario). Abre WhatsApp con el mensaje armado. */
+export default function ContactForm({
+  c,
+  products,
+}: {
+  c: CmsValues<"contacto">["formulario"];
+  products: { slug: string; title: string }[];
+}) {
+  const { whatsapp } = useSettings();
   const params = useSearchParams();
   const initial = params.get("producto") ?? "";
   const [sent, setSent] = useState(false);
@@ -41,7 +50,7 @@ export default function ContactForm() {
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
-    const product = PRODUCTS.find((p) => p.slug === d.get("producto"))?.title ?? "Sin definir";
+    const product = products.find((p) => p.slug === d.get("producto"))?.title ?? "Sin definir";
     const text = [
       "Hola, quiero solicitar una asesoría.",
       `Nombre: ${d.get("nombre")}`,
@@ -51,7 +60,7 @@ export default function ContactForm() {
       `Producto de interés: ${product}`,
       `Mensaje: ${d.get("mensaje") || "-"}`,
     ].join("\n");
-    window.open(`https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     setSent(true);
   }
 
@@ -63,9 +72,9 @@ export default function ContactForm() {
         </span>
         <div className="min-w-0">
           <h2 className="text-xl font-extrabold leading-tight text-forest-dark sm:text-2xl">
-            Solicita tu asesoría <span className="text-brand">GRATIS</span>
+            <Highlight text={c.title} className="text-brand" />
           </h2>
-          <p className="mt-0.5 text-[12px] text-ink/55">Cuéntanos qué necesitas y te respondemos por WhatsApp.</p>
+          <p className="mt-0.5 text-[12px] text-ink/55">{c.subtitle}</p>
         </div>
       </div>
 
@@ -88,7 +97,7 @@ export default function ContactForm() {
         <Field icon={<Package />}>
           <select name="producto" defaultValue={initial} className={`${input} appearance-none`}>
             <option value="">Producto de interés</option>
-            {PRODUCTS.map((p) => (
+            {products.map((p) => (
               <option key={p.slug} value={p.slug}>
                 {p.title}
               </option>
@@ -108,7 +117,7 @@ export default function ContactForm() {
           type="submit"
           className="inline-flex w-full items-center justify-center gap-3 sm:w-auto rounded-full bg-gradient-to-r from-brand-dark to-brand px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30"
         >
-          <WhatsAppIcon className="h-5 w-5" /> Enviar por WhatsApp <ArrowRight className="h-4 w-4" />
+          <WhatsAppIcon className="h-5 w-5" /> {c.button} <ArrowRight className="h-4 w-4" />
         </m.button>
         <p className="flex items-center gap-1.5 text-[11px] text-ink/45">
           <Lock className="h-3.5 w-3.5" /> Tus datos están seguros

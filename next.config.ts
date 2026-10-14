@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Genera .next/standalone: un servidor mínimo (server.js) con solo lo necesario. Lo usa el Dockerfile.
   output: "standalone",
   cacheComponents: true,
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["better-sqlite3", "sharp"],
   // db.ts lee el esquema del foro con fs en tiempo de ejecución: se incluye explícitamente en el build.
   outputFileTracingIncludes: { "/**": ["./src/lib/schema.sql"] },
   poweredByHeader: false,
@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Importa solo las funciones usadas de framer-motion (lucide-react ya viene optimizado).
     optimizePackageImports: ["framer-motion"],
+    // El panel sube imágenes de hasta 15 MB (una por envío): margen para el formulario.
+    serverActions: { bodySizeLimit: "16mb" },
   },
   async headers() {
     return [

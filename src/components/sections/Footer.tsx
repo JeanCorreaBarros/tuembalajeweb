@@ -1,8 +1,9 @@
 import { ArrowUpRight, Clock, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FEATURED_PRODUCTS } from "@/lib/products";
-import { SITE } from "@/lib/site";
+import { Fragment } from "react";
+import { getProducts } from "@/lib/cms/products";
+import { getSettings } from "@/lib/cms/settings";
 import Logo from "../ui/Logo";
 import { InstagramIcon, WhatsAppIcon } from "../ui/icons";
 
@@ -36,7 +37,11 @@ function ContactRow({ icon, children }: { icon: ReactNode; children: ReactNode }
   );
 }
 
-export default function Footer() {
+/** Pie de página: datos y textos editables en /admin (Ajustes generales) y productos destacados. */
+export default async function Footer() {
+  const [settings, products] = await Promise.all([getSettings(), getProducts()]);
+  const featured = products.filter((p) => p.featured);
+  const tagline = settings.footer.tagline.split("·").map((t) => t.trim()).filter(Boolean);
   return (
     <footer className="relative overflow-hidden bg-[#041b12] text-white">
       {/* Línea de acento y brillo sutil */}
@@ -49,13 +54,18 @@ export default function Footer() {
         <div className="col-span-2 sm:col-span-1">
           <Logo />
           <p className="mt-5 max-w-xs text-[13px] leading-relaxed text-white/60">
-            Diseñamos y fabricamos embalajes en madera a tu medida: sostenibles, resistentes y listos para exportar.
+            {settings.footer.description}
           </p>
           <p className="mt-4 flex flex-wrap items-center gap-x-2 text-[12px] font-semibold text-white/80">
-            Calidad <span className="text-brand">•</span> Sostenibilidad <span className="text-brand">•</span> Confianza
+            {tagline.map((t, i) => (
+              <Fragment key={i}>
+                {i > 0 && <span className="text-brand">•</span>}
+                {t}
+              </Fragment>
+            ))}
           </p>
           <a
-            href={SITE.instagram.url}
+            href={settings.instagram.url}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2.5 rounded-full bg-white/5 py-2 pl-2 pr-4 text-[13px] font-semibold ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-lime/40"
@@ -63,7 +73,7 @@ export default function Footer() {
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#f58529] via-[#dd2a7b] to-[#8134af]">
               <InstagramIcon className="h-4 w-4 text-white" />
             </span>
-            {SITE.instagram.handle}
+            {settings.instagram.handle}
           </a>
         </div>
 
@@ -85,7 +95,7 @@ export default function Footer() {
         <div>
           <Title>Productos</Title>
           <ul className="mt-4 space-y-1">
-            {FEATURED_PRODUCTS.map((p) => (
+            {featured.map((p) => (
               <li key={p.slug}>
                 <Link href={`/productos#${p.slug}`} className={linkCls}>
                   {p.title}
@@ -101,28 +111,28 @@ export default function Footer() {
           <Title>Contacto</Title>
           <ul className="mt-5 space-y-4">
             <ContactRow icon={<Phone />}>
-              {SITE.phones.map((p) => (
+              {settings.phones.map((p) => (
                 <a key={p.tel} href={`tel:${p.tel}`} className="py-0.5 transition-colors hover:text-lime">
                   {p.display}
                 </a>
               ))}
             </ContactRow>
             <ContactRow icon={<Mail />}>
-              {SITE.emails.map((e) => (
+              {settings.emails.map((e) => (
                 <a key={e} href={`mailto:${e}`} className="truncate py-0.5 transition-colors hover:text-lime">
                   {e}
                 </a>
               ))}
             </ContactRow>
             <ContactRow icon={<MapPin />}>
-              <span>{SITE.location}</span>
+              <span>{settings.location}</span>
             </ContactRow>
             <ContactRow icon={<Clock />}>
-              <span>{SITE.schedule}</span>
+              <span>{settings.schedule}</span>
             </ContactRow>
           </ul>
           <a
-            href={`https://wa.me/${SITE.whatsapp}`}
+            href={`https://wa.me/${settings.whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-brand/20 transition hover:-translate-y-0.5 hover:bg-brand-dark"

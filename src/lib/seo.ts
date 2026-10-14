@@ -7,18 +7,21 @@ import { SITE } from "./site";
  */
 export function pageMetadata({
   title,
+  absoluteTitle,
   description,
   path,
   noIndex = false,
 }: {
   title?: string;
+  /** Título completo, sin agregar "| Tu Embalaje" (lo usa el inicio). */
+  absoluteTitle?: string;
   description: string;
   path: string;
   noIndex?: boolean;
 }): Metadata {
-  const full = title ? `${title} | ${SITE.name}` : `${SITE.name} | Embalajes en madera a tu medida`;
+  const full = absoluteTitle || (title ? `${title} | ${SITE.name}` : `${SITE.name} | Embalajes en madera a tu medida`);
   return {
-    ...(title ? { title } : {}),
+    ...(absoluteTitle ? { title: { absolute: absoluteTitle } } : title ? { title } : {}),
     description,
     alternates: { canonical: path },
     openGraph: { type: "website", locale: "es_CO", siteName: SITE.name, url: path, title: full, description },
