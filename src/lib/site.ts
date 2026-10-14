@@ -1,5 +1,7 @@
 /** Datos de contacto reales. Cámbialos aquí y se actualizan en toda la web. */
+// El primero es el principal: WhatsApp corporativo de ventas (se muestra en contacto, política y términos).
 const PHONES = [
+  { display: "+57 322 598 2715", tel: "+573225982715" },
   { display: "+57 300 571 3284", tel: "+573005713284" },
   { display: "+57 301 768 8468", tel: "+573017688468" },
 ];
@@ -35,7 +37,14 @@ export const SITE = {
   email: EMAILS[0],
   phoneDisplay: PHONES[0].display,
   phoneTel: PHONES[0].tel,
-  whatsapp: "573005713284", // solo números, con indicativo de país
+  whatsapp: "573225982715", // WhatsApp corporativo de ventas: solo números, con indicativo de país
   location: "Colombia",
   schedule: "Lunes a viernes, 7:30 a.m. – 5:30 p.m.",
 };
+
+/** Enlace a WhatsApp de ventas, opcionalmente con un mensaje ya escrito. */
+export const whatsappLink = (text?: string) =>
+  `https://wa.me/${SITE.whatsapp}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+
+/** Mensaje inicial de los botones "Solicita tu asesoría GRATIS". */
+export const WHATSAPP_ASESORIA = "Hola, quiero solicitar una asesoría gratis para mis embalajes en madera.";

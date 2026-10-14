@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       images: PRODUCTS.map((p) => u(p.image)),
     },
     { url: u("/nosotros"), lastModified: now, changeFrequency: "yearly", priority: 0.7 },
+    { url: u("/cotizador"), lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: u("/contacto"), lastModified: now, changeFrequency: "yearly", priority: 0.8 },
     { url: u("/foro"), lastModified: now, changeFrequency: "daily", priority: 0.6 },
     { url: u("/politica-de-privacidad"), changeFrequency: "yearly", priority: 0.2 },

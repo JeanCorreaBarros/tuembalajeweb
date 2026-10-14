@@ -1,11 +1,13 @@
 import { ImageResponse } from "next/og";
-import { LeafMark } from "./brand-mark";
+import { LOGO_BLANCO_DATA_URI, LOGO_RATIO } from "./logo-data";
 
 // Vista previa al compartir el enlace (WhatsApp, Facebook, LinkedIn, X). La heredan todas las páginas.
 // Va sin foto a propósito: una foto en PNG pesa >1 MB y WhatsApp no muestra vistas previas tan pesadas.
 export const alt = "Tu Embalaje — Embalajes en madera a tu medida";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+const LOGO_W = 330;
 
 const tags = ["Cajas de madera", "Estibas y pallets", "Huacales", "NIMF 15"];
 
@@ -23,13 +25,13 @@ export default function OpengraphImage() {
           background: "linear-gradient(135deg, #062a1c 0%, #0b3b28 55%, #0f5236 100%)",
         }}
       >
-        {/* Anillos y hoja grande a la derecha, como en los encabezados del sitio. */}
+        {/* Anillos y logo oficial a la derecha, como en los encabezados del sitio. */}
         {[520, 400, 280].map((d, i) => (
           <div
             key={d}
             style={{
               position: "absolute",
-              right: 170 - d / 2,
+              right: 250 - d / 2,
               top: 315 - d / 2,
               width: d,
               height: d,
@@ -38,16 +40,17 @@ export default function OpengraphImage() {
             }}
           />
         ))}
-        <div style={{ position: "absolute", right: 50, top: 195, display: "flex" }}>
-          <LeafMark size={240} />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse solo admite <img> */}
+        <img
+          src={LOGO_BLANCO_DATA_URI}
+          alt=""
+          width={LOGO_W}
+          height={Math.round(LOGO_W / LOGO_RATIO)}
+          style={{ position: "absolute", right: 250 - LOGO_W / 2, top: 315 - LOGO_W / LOGO_RATIO / 2 }}
+        />
 
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 80px", width: 900 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 30, fontWeight: 700 }}>
-            <LeafMark size={40} />
-            Tu Embalaje
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", marginTop: 26, fontSize: 68, fontWeight: 700, lineHeight: 1.04 }}>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 70px", width: 780 }}>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 62, fontWeight: 700, lineHeight: 1.04 }}>
             <span>Embalajes en madera</span>
             <span style={{ color: "#3be05a" }}>a tu medida</span>
           </div>

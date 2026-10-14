@@ -3,6 +3,7 @@
 import { m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { whatsappLink, WHATSAPP_ASESORIA } from "@/lib/site";
 import { WhatsAppIcon } from "./icons";
 
 type Props = {
@@ -20,18 +21,25 @@ const variants = {
   outline: "border border-white/70 text-white hover:bg-white/10",
 };
 
+/**
+ * Botón principal. Con `whatsapp` y sin `href`, abre el WhatsApp de ventas (pestaña nueva)
+ * con un mensaje de asesoría ya escrito.
+ */
 export default function Button({
   children,
-  href = "/contacto",
+  href,
   variant = "solid",
   whatsapp,
   arrow = true,
   size = "md",
   className = "",
 }: Props) {
+  const toWhatsApp = whatsapp && !href;
+  const target = toWhatsApp ? whatsappLink(WHATSAPP_ASESORIA) : (href ?? "/contacto");
   return (
     <m.a
-      href={href}
+      href={target}
+      {...(toWhatsApp ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       whileHover={{ y: -2, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
       className={`inline-flex items-center gap-2 rounded-full font-semibold transition-colors ${

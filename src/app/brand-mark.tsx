@@ -1,21 +1,15 @@
-/** Hoja de la marca (mismo trazo que el ícono Leaf del logo) para íconos e imágenes generadas. */
-export function LeafMark({ size, color = "#3be05a" }: { size: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path
-        d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"
-        fill={color}
-        stroke={color}
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { RECYCLE_PATHS, RECYCLE_VIEWBOX } from "./icon-mark";
 
-/** Ícono cuadrado: fondo verde bosque con la hoja de la marca. */
+/** Colores del logo oficial. */
+const LOGO_GREEN = "#004b23";
+const LOGO_LIME = "#9ef01a";
+
+/**
+ * Ícono cuadrado del sitio (pestaña del navegador y pantalla de inicio): el símbolo de
+ * reciclaje con hojas del logo, en verde lima sobre el verde oscuro de la marca.
+ */
 export function BrandIcon({ size, radius }: { size: number; radius: number }) {
+  const mark = Math.round(size * 0.74);
   return (
     <div
       style={{
@@ -25,10 +19,14 @@ export function BrandIcon({ size, radius }: { size: number; radius: number }) {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: radius,
-        background: "linear-gradient(135deg, #0f5236 0%, #062a1c 100%)",
+        background: LOGO_GREEN,
       }}
     >
-      <LeafMark size={Math.round(size * 0.62)} />
+      <svg width={mark} height={mark} viewBox={RECYCLE_VIEWBOX}>
+        {RECYCLE_PATHS.map((d, i) => (
+          <path key={i} d={d} fill={LOGO_LIME} />
+        ))}
+      </svg>
     </div>
   );
 }

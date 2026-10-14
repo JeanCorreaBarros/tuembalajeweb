@@ -6,11 +6,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import Logo from "../ui/Logo";
+import { whatsappLink, WHATSAPP_ASESORIA } from "@/lib/site";
 import { WhatsAppIcon } from "../ui/icons";
 
 const links = [
   ["Inicio", "/"],
   ["Productos y Servicios", "/productos"],
+  ["Cotizador", "/cotizador"],
   ["Nosotros", "/nosotros"],
   ["Foro", "/foro"],
   ["Contacto", "/contacto"],
@@ -39,9 +41,9 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
       }`}
     >
       <div className="flex items-center justify-between px-5 lg:px-[6%]">
-        <Logo />
+        <Logo size="sm" priority />
 
-        <nav className="hidden items-center gap-9 text-[12px] font-semibold text-white lg:flex">
+        <nav className="hidden items-center gap-6 text-[12px] xl:gap-9 font-semibold text-white lg:flex">
           {links.map(([label, href]) => (
             <Link
               key={href}
@@ -54,7 +56,9 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
         </nav>
 
         <m.a
-          href="/contacto"
+          href={whatsappLink(WHATSAPP_ASESORIA)}
+          target="_blank"
+          rel="noopener noreferrer"
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.96 }}
           className="hidden items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[11px] font-bold text-white shadow-lg shadow-brand/30 lg:inline-flex"
@@ -96,7 +100,9 @@ function NavbarInner({ solid = false }: { solid?: boolean }) {
               ))}
               <li className="pt-2">
                 <a
-                  href="/contacto"
+                  href={whatsappLink(WHATSAPP_ASESORIA)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-[13px] font-bold"
                 >
                   <WhatsAppIcon className="h-4 w-4" /> Solicita tu asesoría GRATIS
@@ -117,7 +123,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
       fallback={
         <header className="fixed inset-x-0 top-0 z-50 bg-forest-dark/95 py-3">
           <div className="px-5 lg:px-[6%]">
-            <Logo />
+            <Logo size="sm" />
           </div>
         </header>
       }

@@ -1,22 +1,40 @@
-import { Leaf } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
-export default function Logo({ size = "md" }: { size?: "md" | "lg" }) {
-  const big = size === "lg";
+/** Proporción del logo (ancho / alto) según la mesa de trabajo del archivo original. */
+const RATIO = 726.3 / 466.41;
+
+const SIZES = {
+  sm: "h-[61px]", // menú superior: con py-3 la barra mide 85px (los saltos de sección cuentan con eso)
+  md: "h-[64px]", // pie de página y foro
+  lg: "h-[84px] lg:h-[96px]", // franja final (CTA)
+} as const;
+
+/**
+ * Logo oficial de Tu Embalaje (vectorial, en /public/logo).
+ * `white` para fondos oscuros (por defecto) y `color` para fondos claros.
+ */
+export default function Logo({
+  size = "md",
+  variant = "white",
+  priority = false,
+}: {
+  size?: keyof typeof SIZES;
+  variant?: "white" | "color";
+  priority?: boolean;
+}) {
+  const src = variant === "white" ? "/logo/tu-embalaje-blanco.svg" : "/logo/tu-embalaje-color.svg";
   return (
-    <Link href="/" aria-label="Tu Embalaje - inicio" className="inline-block leading-none text-white">
-      <span className={`relative block font-extrabold tracking-tight ${big ? "text-[34px]" : "text-[26px]"}`}>
-        <span className="block leading-[0.95]">Tu</span>
-        <span className="block leading-[0.95]">Embalaje</span>
-        <Leaf
-          className={`absolute -rotate-12 fill-brand text-brand ${
-            big ? "left-[52px] top-[-4px] h-6 w-6" : "left-[38px] top-[-6px] h-5 w-5"
-          }`}
-        />
-      </span>
-      <span className="mt-1 block text-[8px] font-semibold uppercase tracking-[0.45em] text-white/80">
-        A tu medida
-      </span>
+    <Link href="/" aria-label="Tu Embalaje - inicio" className="inline-block shrink-0">
+      <Image
+        src={src}
+        alt="Tu Embalaje - A tu medida"
+        width={Math.round(96 * RATIO)}
+        height={96}
+        priority={priority}
+        unoptimized
+        className={`${SIZES[size]} w-auto`}
+      />
     </Link>
   );
 }

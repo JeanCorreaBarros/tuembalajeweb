@@ -9,6 +9,7 @@ import { InstagramIcon, WhatsAppIcon } from "../ui/icons";
 const NAV = [
   { label: "Inicio", href: "/" },
   { label: "Productos y servicios", href: "/productos" },
+  { label: "Cotizador", href: "/cotizador" },
   { label: "Nosotros", href: "/nosotros" },
   { label: "Foro", href: "/foro" },
   { label: "Contacto", href: "/contacto" },

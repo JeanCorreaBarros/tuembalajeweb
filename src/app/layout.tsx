@@ -71,7 +71,7 @@ const organization = {
       name: SITE.name,
       legalName: SITE.legalName,
       url: SITE.url,
-      logo: `${SITE.url}/icon`,
+      logo: `${SITE.url}/logo/tu-embalaje-color.png`,
       image: `${SITE.url}/opengraph-image`,
       description: SITE.description,
       email: SITE.email,
