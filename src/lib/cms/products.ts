@@ -7,12 +7,32 @@ import { isImagePath } from "./store";
 /** Etiqueta de caché del catálogo: al guardar un producto se invalida. */
 export const PRODUCTS_TAG = "products";
 
-/** La primera vez, la tabla se llena con los productos que tenía la web. */
+/** La primera vez, la tabla se llena con los productos que tenía la web.
+ *  Además, en cada arranque inserta (sin sobrescribir) cualquier producto de
+ *  DEFAULT_PRODUCTS que no exista aún en la DB — esto garantiza que los productos
+ *  nuevos añadidos al código aparezcan en producción sin tocar la base de datos. */
 function ensureSeeded() {
   const { n } = db.prepare("SELECT COUNT(*) AS n FROM cms_products").get() as { n: number };
-  if (n > 0) return;
+
+  if (n === 0) {
+    // Semilla inicial: la tabla está vacía, insertamos todos los productos.
+    const ins = db.prepare("INSERT OR IGNORE INTO cms_products (slug, position, data, updated_at) VALUES (?, ?, ?, ?)");
+    db.transaction(() => DEFAULT_PRODUCTS.forEach((p, i) => ins.run(p.slug, i, JSON.stringify(p), Date.now())))();
+    return;
+  }
+
+  // Migración incremental: inserta solo los productos que faltan en la DB.
   const ins = db.prepare("INSERT OR IGNORE INTO cms_products (slug, position, data, updated_at) VALUES (?, ?, ?, ?)");
-  db.transaction(() => DEFAULT_PRODUCTS.forEach((p, i) => ins.run(p.slug, i, JSON.stringify(p), Date.now())))();
+  const { m } = db.prepare("SELECT COALESCE(MAX(position), -1) AS m FROM cms_products").get() as { m: number };
+  let pos = m + 1;
+  db.transaction(() => {
+    for (const p of DEFAULT_PRODUCTS) {
+      const exists = db.prepare("SELECT 1 FROM cms_products WHERE slug = ?").get(p.slug);
+      if (!exists) {
+        ins.run(p.slug, pos++, JSON.stringify(p), Date.now());
+      }
+    }
+  })();
 }
 
 /** Catálogo ordenado (lectura directa, para el panel). */
