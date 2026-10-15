@@ -7,15 +7,16 @@ import { PRODUCT_CATEGORIES, type Product, type ProductCategory } from "@/lib/pr
 import { useWhatsappLink } from "@/components/cms/SettingsProvider";
 import { WhatsAppIcon } from "../ui/icons";
 import ProductDetail from "./ProductDetail";
+import ServicesView from "./ServicesView";
 
-type Filter = ProductCategory | "todos";
+type Filter = ProductCategory | "todos" | "servicios";
 
 /** Minúsculas y sin tildes: "Diseño" encuentra "diseno" y viceversa. */
 const normalize = (s: string) =>
   s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+    .replace(/[\u0300-\u036f]/g, "");
 
 /** Todo el texto de un producto (incluida la ficha técnica) en un solo bloque para buscar. */
 const searchText = (p: Product) =>
@@ -36,6 +37,17 @@ const searchText = (p: Product) =>
   );
 
 const SUGGESTIONS = ["4 entradas", "tacos", "NIMF 15", "huacales", "piso cerrado"];
+
+/** Texto de todos los servicios para el buscador. */
+const SERVICE_SEARCH_TEXT = normalize(
+  [
+    "fabricacion gran escala produccion industrial volumen lotes",
+    "recertificacion embalajes madera nimf 15 exportacion sello ht tratamiento termico",
+    "recoleccion madera residuos disposicion final huacales polines estibas baja",
+    "remanufactura reparacion embalajes madera readecuacion medidas ahorro",
+    "servicios servicio fabricar reparar recertificar recolectar",
+  ].join(" ")
+);
 
 /**
  * Catálogo de /productos con buscador y filtros por categoría. Ambos se combinan y quedan
@@ -69,7 +81,7 @@ export default function ProductCatalog({ products }: { products: Product[] }) {
     const url = new URL(window.location.href);
     if (query.trim()) url.searchParams.set("q", query.trim());
     else url.searchParams.delete("q");
-    if (filter !== "todos") url.searchParams.set("categoria", filter);
+    if (filter !== "todos" && filter !== "servicios") url.searchParams.set("categoria", filter);
     else url.searchParams.delete("categoria");
     window.history.replaceState(window.history.state, "", url);
   }, [query, filter]);
@@ -86,14 +98,24 @@ export default function ProductCatalog({ products }: { products: Product[] }) {
     counts[p.category] = (counts[p.category] ?? 0) + 1;
   }
 
-  const visible = index.filter(({ p, text }) => (filter === "todos" || p.category === filter) && matchesQuery(text));
-  const filtered = words.length > 0 || filter !== "todos";
+  // Detecta si la búsqueda coincide con algún servicio.
+  const servicesMatch = words.length > 0 && matchesQuery(SERVICE_SEARCH_TEXT);
+
+  const visible = index.filter(({ p, text }) => (filter === "todos" || filter === "servicios" || p.category === filter) && matchesQuery(text));
+  const filtered = words.length > 0 || (filter !== "todos" && filter !== "servicios");
+
+  // Si el filtro activo es "todos", no hay productos y la búsqueda coincide con servicios → mostrar servicios.
+  const showServicesFromSearch = filter === "todos" && visible.length === 0 && servicesMatch;
   const clear = () => {
     setQuery("");
     setFilter("todos");
   };
 
-  const chips: { slug: Filter; label: string }[] = [{ slug: "todos", label: "Todos" }, ...PRODUCT_CATEGORIES];
+  const chips: { slug: Filter; label: string }[] = [
+    { slug: "todos", label: "Todos" },
+    ...PRODUCT_CATEGORIES,
+    { slug: "servicios", label: "Servicios" },
+  ];
 
   return (
     <>
@@ -125,17 +147,19 @@ export default function ProductCatalog({ products }: { products: Product[] }) {
           <div role="group" aria-label="Filtrar por categoría" className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:px-0">
             {chips.map((c) => {
               const active = filter === c.slug;
-              const n = counts[c.slug] ?? 0;
+              const isServiciosChip = c.slug === "servicios";
+              const n = isServiciosChip ? (words.length > 0 ? (servicesMatch ? 4 : 0) : 4) : (counts[c.slug] ?? 0);
               return (
                 <button
                   key={c.slug}
                   type="button"
                   onClick={() => setFilter(c.slug)}
                   aria-pressed={active}
-                  disabled={!active && n === 0}
-                  className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                  className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-semibold transition ${
                     active
-                      ? "border-forest bg-forest text-white"
+                      ? isServiciosChip
+                        ? "border-brand bg-brand text-white"
+                        : "border-forest bg-forest text-white"
                       : "border-black/10 bg-white text-forest-dark hover:border-brand hover:text-brand-dark"
                   }`}
                 >
@@ -163,7 +187,7 @@ export default function ProductCatalog({ products }: { products: Product[] }) {
               {words.length > 0 && (
                 <>
                   {" "}
-                  para “<b className="text-ink">{query.trim()}</b>”
+                  para &ldquo;<b className="text-ink">{query.trim()}</b>&rdquo;
                 </>
               )}
             </span>
@@ -174,14 +198,16 @@ export default function ProductCatalog({ products }: { products: Product[] }) {
         )}
       </div>
 
-      {visible.length === 0 ? (
+      {filter === "servicios" || showServicesFromSearch ? (
+        <ServicesView />
+      ) : visible.length === 0 ? (
         <section className="bg-white px-5 py-16 sm:px-8">
           <div className="mx-auto flex max-w-xl flex-col items-center text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand">
               <PackageSearch className="h-8 w-8" aria-hidden />
             </span>
             <h2 className="mt-5 text-xl font-extrabold text-forest-dark">
-              No encontramos productos para “{query.trim()}”
+              No encontramos productos para &ldquo;{query.trim()}&rdquo;
             </h2>
             <p className="mt-2 text-[14px] leading-relaxed text-ink/60">
               Prueba con otras palabras o quita el filtro. Si necesitas algo distinto, lo diseñamos a tu medida.

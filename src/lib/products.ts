@@ -6,6 +6,7 @@ export const PRODUCT_CATEGORIES = [
   { slug: "estibas", label: "Estibas" },
   { slug: "especiales", label: "Especiales" },
   { slug: "medida", label: "A la medida" },
+  { slug: "plastico", label: "Plástico" },
 ] as const;
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number]["slug"];
 
@@ -224,6 +225,30 @@ export const PRODUCTS: Product[] = [
       ENSAMBLE,
       { label: "Uso recomendado", value: "Logística y exportación con manejo por cualquier costado" },
       CAPACIDAD,
+    ],
+  },
+  {
+    slug: "estiba-plastico",
+    category: "plastico",
+    title: "Estibas de plástico",
+    short: "Higiene y durabilidad para el transporte de alimentos.",
+    image: "/images/producto-estiba-plastico-v2.jpg",
+    featured: false,
+    intro:
+      "Estibas fabricadas en plástico reciclado fundido. Una opción ideal para el transporte de alimentos y productos que requieren inocuidad.",
+    bullets: [
+      "Fabricadas en plástico reciclado fundido: resistentes, livianas e impermeables.",
+      "Opción ideal para transporte de alimentos ya que mantiene la inocuidad y es fácil de lavar.",
+      "Alta durabilidad y resistencia a la humedad, hongos e insectos.",
+    ],
+    tags: ["Plástico reciclado", "Alimentos", "Inocuidad", "4 entradas"],
+    specs: [
+      { label: "Material", value: "Plástico reciclado fundido (HDPE)" },
+      { label: "Entradas de montacargas", value: "4 (por todos los lados)" },
+      { label: "Medidas estándar", value: "100×120 cm y 120×120 cm; otras medidas disponibles" },
+      { label: "Uso recomendado", value: "Transporte y almacenamiento de alimentos, farmacéuticos y productos que requieren inocuidad" },
+      { label: "Ventajas", value: "Impermeable, lavable, resistente a hongos e insectos, no astilla" },
+      { label: "Capacidad de carga", value: "Hasta 1.500 kg estática; consulta según tu aplicación" },
     ],
   },
 ];
