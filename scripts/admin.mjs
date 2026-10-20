@@ -46,7 +46,9 @@ const hashPassword = (password) =>
 
 // .env.local (en tu PC) o variables de entorno del servidor (en Easypanel/Docker no hay .env.local).
 const env = { ...process.env, ...readEnv() };
-const [argEmail, argName, argPassword] = process.argv.slice(2);
+// --super: cuenta de soporte técnico (superadministrador). Solo otro superadministrador puede modificarla.
+const isSuper = process.argv.includes("--super");
+const [argEmail, argName, argPassword] = process.argv.slice(2).filter((a) => a !== "--super");
 const email = (argEmail ?? env.ADMIN_EMAIL ?? "").trim().toLowerCase();
 const name = argName ?? "Equipo Tu Embalaje";
 
@@ -68,21 +70,30 @@ const db = new Database(dbPath);
 db.pragma("foreign_keys = ON");
 db.exec(fs.readFileSync(path.join(root, "src", "lib", "schema.sql"), "utf8"));
 
+// La columna is_super la crea la web al arrancar; se asegura aquí por si el script corre antes.
+const cols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+if (!cols.includes("is_super")) db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER NOT NULL DEFAULT 0");
+
 const hash = await hashPassword(password);
 const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+const label = isSuper ? "Superadministrador" : "Administrador";
 
 if (existing) {
-  db.prepare("UPDATE users SET password_hash = ?, role = 'admin' WHERE id = ?").run(hash, existing.id);
+  // Sin --super se conserva la marca que ya tuviera la cuenta.
+  db.prepare(
+    `UPDATE users SET password_hash = ?, role = 'admin'${isSuper ? ", is_super = 1, disabled = 0" : ""} WHERE id = ?`,
+  ).run(hash, existing.id);
   db.prepare("DELETE FROM sessions WHERE user_id = ?").run(existing.id); // cierra sesiones anteriores
-  console.log(`Administrador actualizado: ${email}`);
+  console.log(`${label} actualizado: ${email}`);
 } else {
-  db.prepare("INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, 'admin', ?)").run(
+  db.prepare("INSERT INTO users (name, email, password_hash, role, is_super, created_at) VALUES (?, ?, ?, 'admin', ?, ?)").run(
     name,
     email,
     hash,
+    isSuper ? 1 : 0,
     Date.now(),
   );
-  console.log(`Administrador creado: ${email}`);
+  console.log(`${label} creado: ${email}`);
 }
 
 db.close();
@@ -90,9 +101,10 @@ db.close();
 // En el servidor (Docker) no se puede escribir .env.local: en ese caso la contraseña se muestra aquí.
 let saved = false;
 try {
-  setEnv("ADMIN_EMAIL", email);
-  if (generated) setEnv("ADMIN_PASSWORD", password);
-  saved = true;
+  // La cuenta de soporte no reemplaza al administrador principal guardado en .env.local.
+  if (!isSuper) setEnv("ADMIN_EMAIL", email);
+  if (generated && !isSuper) setEnv("ADMIN_PASSWORD", password);
+  saved = !generated || !isSuper;
 } catch {
   saved = false;
 }

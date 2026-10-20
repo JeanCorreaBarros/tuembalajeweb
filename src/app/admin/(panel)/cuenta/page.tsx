@@ -64,7 +64,7 @@ export default async function CuentaPage() {
               <p className="mt-3 text-[18px] font-extrabold text-forest-dark">{user.name}</p>
               <p className="text-[13px] text-ink/55">{user.job_title || "Sin cargo registrado"}</p>
               <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold text-brand-dark">
-                <BadgeCheck className="h-3.5 w-3.5" aria-hidden /> Administrador
+                <BadgeCheck className="h-3.5 w-3.5" aria-hidden /> {user.is_super ? "Superadministrador" : "Administrador"}
               </span>
             </div>
             <ul className="divide-y divide-black/5 border-t border-black/5">

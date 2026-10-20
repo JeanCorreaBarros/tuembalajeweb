@@ -11,6 +11,8 @@ export type AdminUser = {
   phone: string;
   job_title: string;
   disabled: number;
+  /** Superadministrador (soporte técnico): solo otro superadministrador puede modificar su cuenta. */
+  is_super: number;
   created_at: number;
   last_login: number | null;
   questions: number;
@@ -19,7 +21,7 @@ export type AdminUser = {
 };
 
 const SELECT = `
-  SELECT u.id, u.name, u.email, u.role, u.phone, u.job_title, u.disabled, u.created_at, u.last_login,
+  SELECT u.id, u.name, u.email, u.role, u.phone, u.job_title, u.disabled, u.is_super, u.created_at, u.last_login,
          (SELECT COUNT(*) FROM questions q WHERE q.user_id = u.id) AS questions,
          (SELECT COUNT(*) FROM answers a WHERE a.user_id = u.id) AS answers,
          (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > @now) AS sessions
@@ -33,7 +35,7 @@ export function listUsers(q: string, filter: UserFilter): AdminUser[] {
   if (filter === "suspendidos") where.push("u.disabled = 1");
   if (q) where.push("(u.name LIKE @q OR u.email LIKE @q OR u.phone LIKE @q OR u.job_title LIKE @q)");
   return db
-    .prepare(`${SELECT} ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY u.role = 'admin' DESC, u.disabled, u.name COLLATE NOCASE`)
+    .prepare(`${SELECT} ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY u.is_super DESC, u.role = 'admin' DESC, u.disabled, u.name COLLATE NOCASE`)
     .all({ now: Date.now(), role: filter, q: `%${q}%` }) as AdminUser[];
 }
 
@@ -52,6 +54,10 @@ export function userStats() {
     )
     .get() as { total: number; admins: number; members: number; suspended: number };
 }
+
+/** ¿Es superadministrador? */
+export const isSuperUser = (id: number) =>
+  ((db.prepare("SELECT is_super FROM users WHERE id = ?").get(id) as { is_super: number } | undefined)?.is_super ?? 0) === 1;
 
 /** Administradores activos (para no dejar el panel sin nadie que pueda entrar). */
 export const activeAdmins = () =>

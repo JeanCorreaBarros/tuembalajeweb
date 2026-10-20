@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, Clock, ExternalLink, KeyRound, MessageCircle, MessagesSquare, MonitorSmartphone, Trash2 } from "lucide-react";
+import { ArrowLeft, Lock, CalendarDays, Clock, ExternalLink, KeyRound, MessageCircle, MessagesSquare, MonitorSmartphone, Trash2 } from "lucide-react";
 import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,7 +9,7 @@ import PasswordReset from "@/components/admin/users/PasswordReset";
 import UserForm from "@/components/admin/users/UserForm";
 import { Avatar } from "@/components/admin/users/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { activeAdmins, getUser } from "@/lib/cms/users";
+import { activeAdmins, getUser, isSuperUser } from "@/lib/cms/users";
 import { db } from "@/lib/db";
 
 // El panel depende de la sesión en cada pantalla: no se navega «al instante» (lo indica Next en desarrollo).
@@ -26,6 +26,8 @@ export default async function UsuarioPage({ params }: { params: Promise<{ id: st
   if (!user) notFound();
   const me = await getCurrentUser();
   const isSelf = me?.id === user.id;
+  // La cuenta de soporte técnico solo la modifica un superadministrador: los demás la ven en solo lectura.
+  const locked = user.is_super === 1 && !(me && isSuperUser(me.id));
   const lastAdmin = user.role === "admin" && !user.disabled && activeAdmins() <= 1;
   const questions = db
     .prepare("SELECT id, title, created_at FROM questions WHERE user_id = ? ORDER BY created_at DESC LIMIT 5")
@@ -48,12 +50,24 @@ export default async function UsuarioPage({ params }: { params: Promise<{ id: st
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
-          <UserForm
-            mode="edit"
-            action={updateUserAction.bind(null, user.id)}
-            isSelf={isSelf}
-            user={{ name: user.name, email: user.email, phone: user.phone, job_title: user.job_title, role: user.role, disabled: user.disabled }}
-          />
+          {locked ? (
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+              <p className="flex items-center gap-2 text-[15px] font-extrabold text-forest-dark">
+                <Lock className="h-4 w-4 text-violet-600" aria-hidden /> Cuenta de soporte técnico
+              </p>
+              <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-ink/60">
+                Esta cuenta pertenece al equipo de soporte técnico del sitio. Para proteger el acceso de soporte, sus datos, su contraseña y su
+                estado solo los puede modificar el superadministrador.
+              </p>
+            </div>
+          ) : (
+            <UserForm
+              mode="edit"
+              action={updateUserAction.bind(null, user.id)}
+              isSelf={isSelf}
+              user={{ name: user.name, email: user.email, phone: user.phone, job_title: user.job_title, role: user.role, disabled: user.disabled }}
+            />
+          )}
         </div>
 
         <aside className="space-y-4">
@@ -110,7 +124,9 @@ export default async function UsuarioPage({ params }: { params: Promise<{ id: st
             <p className="mb-1 flex items-center gap-2 text-[14px] font-extrabold text-forest-dark">
               <KeyRound className="h-4 w-4 text-brand" aria-hidden /> Contraseña
             </p>
-            {isSelf ? (
+            {locked ? (
+              <p className="text-[12px] text-ink/55">Solo el superadministrador puede cambiar la contraseña de esta cuenta.</p>
+            ) : isSelf ? (
               <p className="text-[12px] text-ink/55">
                 Tu propia contraseña se cambia en{" "}
                 <Link href="/admin/cuenta" className="font-bold text-brand-dark underline">
@@ -129,7 +145,7 @@ export default async function UsuarioPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Zona de peligro */}
-          {!isSelf && (
+          {!isSelf && !locked && (
             <div className="rounded-3xl border border-red-200 bg-red-50/50 p-5">
               <p className="flex items-center gap-2 text-[14px] font-extrabold text-red-700">
                 <Trash2 className="h-4 w-4" aria-hidden /> Eliminar usuario

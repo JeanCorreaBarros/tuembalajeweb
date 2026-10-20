@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["better-sqlite3", "sharp"],
   // db.ts lee el esquema del foro con fs en tiempo de ejecución: se incluye explícitamente en el build.
   outputFileTracingIncludes: { "/**": ["./src/lib/schema.sql"] },
+  // La base de datos y las imágenes subidas viven en el volumen del servidor: nunca se empaquetan en el build.
+  outputFileTracingExcludes: { "/**": ["./data/**"] },
   poweredByHeader: false,
   images: {
     // AVIF pesa ~40–50 % menos que JPEG con la misma calidad; WebP como respaldo.

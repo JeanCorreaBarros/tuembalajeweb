@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { destroyAllSessions, destroyOtherSessions, hashPassword } from "@/lib/auth";
 import { requireAdmin } from "@/lib/cms/admin";
-import { activeAdmins, generatePassword, getUser, MIN_PASSWORD, readUserInput } from "@/lib/cms/users";
+import { activeAdmins, generatePassword, getUser, isSuperUser, MIN_PASSWORD, readUserInput, type AdminUser } from "@/lib/cms/users";
 import { db } from "@/lib/db";
 
 /** Resultado de los formularios de usuarios. `password` solo vuelve cuando el sistema la generó (se muestra una vez). */
@@ -25,6 +25,10 @@ function passwordFrom(fd: FormData): { value: string; generated: boolean } | { e
   }
   return { value: generatePassword(), generated: true };
 }
+
+/** La cuenta de soporte técnico (superadministrador) solo la modifica otro superadministrador. */
+const SUPER_LOCKED = "Esta es la cuenta de soporte técnico: solo la puede modificar el superadministrador.";
+const lockedFor = (meId: number, target: AdminUser) => target.is_super === 1 && !isSuperUser(meId);
 
 /* ---------- mi cuenta ---------- */
 
@@ -72,6 +76,7 @@ export async function updateUserAction(id: number, _: UserResult, fd: FormData):
   const me = await requireAdmin();
   const user = getUser(id);
   if (!user) return { ok: false, error: "El usuario ya no existe." };
+  if (lockedFor(me.id, user)) return { ok: false, error: SUPER_LOCKED };
   const input = readUserInput(fd, id);
   if ("error" in input) return { ok: false, error: input.error };
   const role = fd.get("role") === "admin" ? "admin" : "user";
@@ -102,7 +107,9 @@ export async function updateUserAction(id: number, _: UserResult, fd: FormData):
 
 export async function resetUserPasswordAction(id: number, _: UserResult, fd: FormData): Promise<UserResult> {
   const me = await requireAdmin();
-  if (!getUser(id)) return { ok: false, error: "El usuario ya no existe." };
+  const target = getUser(id);
+  if (!target) return { ok: false, error: "El usuario ya no existe." };
+  if (lockedFor(me.id, target)) return { ok: false, error: SUPER_LOCKED };
   if (id === me.id) return { ok: false, error: "Cambia tu propia contraseña desde Mi cuenta." };
   const pw = passwordFrom(fd);
   if ("error" in pw) return { ok: false, error: pw.error };
@@ -116,7 +123,7 @@ export async function deleteUserAction(id: number) {
   const me = await requireAdmin();
   const user = getUser(id);
   if (!user) redirect("/admin/usuarios");
-  if (id === me.id) return;
+  if (id === me.id || lockedFor(me.id, user)) return;
   if (user.role === "admin" && !user.disabled && activeAdmins() <= 1) return;
   // Sus preguntas y respuestas del foro se borran con él (ON DELETE CASCADE); su historial del panel queda sin autor.
   db.prepare("DELETE FROM users WHERE id = ?").run(id);

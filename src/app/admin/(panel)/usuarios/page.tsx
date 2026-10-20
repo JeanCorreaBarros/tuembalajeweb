@@ -153,11 +153,11 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
                   <span className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-1 pl-14 text-[12px] text-ink/50 md:col-span-1 md:pl-0">
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                        u.role === "admin" ? "bg-brand/10 text-brand-dark" : "bg-sky-50 text-sky-700"
+                        u.is_super ? "bg-violet-100 text-violet-700" : u.role === "admin" ? "bg-brand/10 text-brand-dark" : "bg-sky-50 text-sky-700"
                       }`}
                     >
                       {u.role === "admin" ? <ShieldCheck className="h-3 w-3" aria-hidden /> : <MessagesSquare className="h-3 w-3" aria-hidden />}
-                      {u.role === "admin" ? "Administrador" : "Miembro"}
+                      {u.is_super ? "Soporte técnico" : u.role === "admin" ? "Administrador" : "Miembro"}
                     </span>
                     <span className="md:hidden">
                       {u.questions} preguntas · {u.answers} respuestas · {ago(u.last_login)}
