@@ -11,13 +11,11 @@ import Products from "@/components/sections/Products";
 import Stats from "@/components/sections/Stats";
 import Testimonials from "@/components/sections/Testimonials";
 import { getProducts } from "@/lib/cms/products";
-import { getSettings } from "@/lib/cms/settings";
+import { seoMetadata } from "@/lib/cms/seo";
 import { getPageContent } from "@/lib/cms/store";
-import { pageMetadata } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getSettings();
-  return pageMetadata({ absoluteTitle: seo.homeTitle, description: seo.homeDescription, path: "/" });
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("inicio");
 }
 
 /** Inicio: todo el contenido se edita en /admin (Páginas · Inicio). */

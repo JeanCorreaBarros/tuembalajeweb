@@ -3,9 +3,11 @@
 import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { useState, useTransition } from "react";
 import { restoreRevisionAction } from "@/app/admin/actions";
+import { useConfirm } from "./ConfirmDialog";
 
 export default function RestoreButton({ id, label }: { id: number; label: string }) {
   const [pending, start] = useTransition();
+  const confirmDlg = useConfirm();
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   if (result?.ok)
     return (
@@ -18,8 +20,14 @@ export default function RestoreButton({ id, label }: { id: number; label: string
       <button
         type="button"
         disabled={pending}
-        onClick={() => {
-          if (!confirm(`¿Restaurar esta versión de «${label}»? Se publicará de inmediato.`)) return;
+        onClick={async () => {
+          const ok = await confirmDlg({
+            tone: "info",
+            title: "¿Restaurar esta versión?",
+            message: `«${label}» volverá a como estaba en esa versión y se publicará de inmediato. La versión actual queda guardada en el Historial.`,
+            confirmLabel: "Restaurar y publicar",
+          });
+          if (!ok) return;
           start(async () => {
             const r = await restoreRevisionAction(id);
             setResult(r.ok ? { ok: true, text: r.message ?? "" } : { ok: false, text: r.error });

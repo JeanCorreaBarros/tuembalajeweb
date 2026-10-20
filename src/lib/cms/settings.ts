@@ -1,7 +1,7 @@
 import "server-only";
 import { getPageContent } from "./store";
 
-/** Ajustes generales listos para usar (datos de contacto, empresa, pie y SEO), editables en /admin. */
+/** Ajustes generales listos para usar (datos de contacto, empresa y pie), editables en /admin. El SEO está en ./seo.ts. */
 export async function getSettings() {
   const a = await getPageContent("ajustes");
   const c = a.contacto;
@@ -22,7 +22,6 @@ export async function getSettings() {
     address: a.empresa.address,
     legalUpdated: a.empresa.legalUpdated,
     footer: a.pie,
-    seo: a.seo,
   };
 }
 

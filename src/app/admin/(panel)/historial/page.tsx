@@ -35,6 +35,7 @@ export default async function HistorialPage({ searchParams }: { searchParams: Pr
     <>
       <AdminHeader
         title="Historial"
+        help="/admin/ayuda#historial"
         description="Cada vez que publicas, se guarda una copia. Puedes restaurar cualquier versión anterior con un clic."
       />
       {rows.length === 0 ? (

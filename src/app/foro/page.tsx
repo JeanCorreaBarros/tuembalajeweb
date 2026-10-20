@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import {
   ArrowRight,
@@ -31,17 +32,15 @@ import {
   VIEWS,
   type View,
 } from "@/lib/forum";
-import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { breadcrumbs } from "@/lib/seo";
+import { seoMetadata } from "@/lib/cms/seo";
 import { getSettings } from "@/lib/cms/settings";
 import JsonLd from "@/components/seo/JsonLd";
 
 // Los filtros (?q=, ?categoria=, ?pagina=) apuntan a /foro como URL canónica: evita contenido duplicado.
-export const metadata = pageMetadata({
-  title: "Foro de preguntas sobre embalajes en madera",
-  description:
-    "Pregunta y resuelve dudas sobre cajas de madera, estibas, embalajes especiales, exportación y NIMF 15 con la comunidad y el equipo de Tu Embalaje.",
-  path: "/foro",
-});
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("foro");
+}
 
 type SP = Promise<{ q?: string; categoria?: string; pagina?: string; vista?: string }>;
 

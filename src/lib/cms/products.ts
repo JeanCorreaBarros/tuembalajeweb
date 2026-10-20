@@ -11,26 +11,24 @@ export const PRODUCTS_TAG = "products";
  *  Además, en cada arranque inserta (sin sobrescribir) cualquier producto de
  *  DEFAULT_PRODUCTS que no exista aún en la DB — esto garantiza que los productos
  *  nuevos añadidos al código aparezcan en producción sin tocar la base de datos. */
+/**
+ * Lleva a la base de datos los productos que vienen en el código (lib/products.ts), cada uno UNA sola vez:
+ * se anota en cms_product_seeds. Así un producto nuevo del código llega al servidor ya desplegado, pero
+ * uno que el administrador eliminó desde el panel no vuelve a aparecer.
+ */
 function ensureSeeded() {
-  const { n } = db.prepare("SELECT COUNT(*) AS n FROM cms_products").get() as { n: number };
+  const seeded = new Set((db.prepare("SELECT slug FROM cms_product_seeds").all() as { slug: string }[]).map((r) => r.slug));
+  const pending = DEFAULT_PRODUCTS.filter((p) => !seeded.has(p.slug));
+  if (!pending.length) return;
 
-  if (n === 0) {
-    // Semilla inicial: la tabla está vacía, insertamos todos los productos.
-    const ins = db.prepare("INSERT OR IGNORE INTO cms_products (slug, position, data, updated_at) VALUES (?, ?, ?, ?)");
-    db.transaction(() => DEFAULT_PRODUCTS.forEach((p, i) => ins.run(p.slug, i, JSON.stringify(p), Date.now())))();
-    return;
-  }
-
-  // Migración incremental: inserta solo los productos que faltan en la DB.
-  const ins = db.prepare("INSERT OR IGNORE INTO cms_products (slug, position, data, updated_at) VALUES (?, ?, ?, ?)");
-  const { m } = db.prepare("SELECT COALESCE(MAX(position), -1) AS m FROM cms_products").get() as { m: number };
-  let pos = m + 1;
+  const exists = db.prepare("SELECT 1 FROM cms_products WHERE slug = ?");
+  const ins = db.prepare("INSERT INTO cms_products (slug, position, data, updated_at) VALUES (?, ?, ?, ?)");
+  const mark = db.prepare("INSERT OR IGNORE INTO cms_product_seeds (slug) VALUES (?)");
   db.transaction(() => {
-    for (const p of DEFAULT_PRODUCTS) {
-      const exists = db.prepare("SELECT 1 FROM cms_products WHERE slug = ?").get(p.slug);
-      if (!exists) {
-        ins.run(p.slug, pos++, JSON.stringify(p), Date.now());
-      }
+    let { m: pos } = db.prepare("SELECT COALESCE(MAX(position), -1) AS m FROM cms_products").get() as { m: number };
+    for (const p of pending) {
+      if (!exists.get(p.slug)) ins.run(p.slug, ++pos, JSON.stringify(p), Date.now());
+      mark.run(p.slug);
     }
   })();
 }

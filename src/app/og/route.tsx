@@ -1,17 +1,17 @@
 import { ImageResponse } from "next/og";
-import { LOGO_BLANCO_DATA_URI, LOGO_RATIO } from "./logo-data";
+import { LOGO_BLANCO_DATA_URI, LOGO_RATIO } from "../logo-data";
 
-// Vista previa al compartir el enlace (WhatsApp, Facebook, LinkedIn, X). La heredan todas las páginas.
+// Imagen de marca al compartir el enlace (WhatsApp, Facebook, LinkedIn, X). Es la imagen por defecto:
+// en el panel (SEO) se puede elegir otra para todo el sitio o para cada página.
 // Va sin foto a propósito: una foto en PNG pesa >1 MB y WhatsApp no muestra vistas previas tan pesadas.
-export const alt = "Tu Embalaje — Embalajes en madera a tu medida";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+// Es una ruta (y no el archivo opengraph-image) porque ese archivo tendría prioridad sobre la imagen elegida en el panel.
+const size = { width: 1200, height: 630 };
 
 const LOGO_W = 330;
 
 const tags = ["Cajas de madera", "Estibas y pallets", "Huacales", "NIMF 15"];
 
-export default function OpengraphImage() {
+export function GET() {
   return new ImageResponse(
     (
       <div

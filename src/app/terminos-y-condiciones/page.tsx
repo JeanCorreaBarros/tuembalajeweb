@@ -5,14 +5,12 @@ import Navbar from "@/components/sections/Navbar";
 import JsonLd from "@/components/seo/JsonLd";
 import { getSettings } from "@/lib/cms/settings";
 import { getPageContent } from "@/lib/cms/store";
-import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { breadcrumbs } from "@/lib/seo";
+import { seoMetadata } from "@/lib/cms/seo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Términos y condiciones de uso",
-  description:
-    "Condiciones para usar el sitio web de Tu Embalaje: cotizaciones, pedidos, uso del foro, propiedad intelectual y responsabilidad.",
-  path: "/terminos-y-condiciones",
-});
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("terminos");
+}
 
 /** Términos y condiciones: texto editable en /admin (Páginas · Términos y condiciones). */
 export default async function TerminosPage() {

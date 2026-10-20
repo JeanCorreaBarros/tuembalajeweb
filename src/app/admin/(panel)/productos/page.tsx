@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { deleteProductAction, duplicateProductAction, moveProductAction } from "@/app/admin/actions";
 import { AdminHeader } from "@/components/admin/AdminShell";
-import ConfirmButton from "@/components/foro/ConfirmButton";
+import { ConfirmSubmit } from "@/components/admin/ConfirmDialog";
 import { readProducts } from "@/lib/cms/products";
 import { PRODUCT_CATEGORIES } from "@/lib/products";
 
@@ -23,6 +23,7 @@ export default async function ProductosAdminPage() {
     <>
       <AdminHeader
         title="Productos"
+        help="/admin/ayuda#productos"
         description="El orden de esta lista es el orden del catálogo. Los «Destacados» aparecen en el inicio y en el pie de página."
         actions={
           <Link
@@ -78,12 +79,18 @@ export default async function ProductosAdminPage() {
                 <Pencil className="h-4 w-4" />
               </Link>
               <form action={deleteProductAction.bind(null, p.slug)}>
-                <ConfirmButton
-                  message={`¿Eliminar «${p.title}»? Podrás recuperarlo desde el Historial.`}
+                <ConfirmSubmit
+                  options={{
+                    tone: "warning",
+                    title: `¿Eliminar «${p.title}»?`,
+                    message: "Dejará de aparecer en el catálogo y en la web de inmediato. Podrás recuperarlo desde el Historial.",
+                    images: [p.image],
+                    confirmLabel: "Eliminar producto",
+                  }}
                   className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}
                 >
                   <Trash2 className="h-4 w-4" aria-label="Eliminar" />
-                </ConfirmButton>
+                </ConfirmSubmit>
               </form>
             </div>
           </li>

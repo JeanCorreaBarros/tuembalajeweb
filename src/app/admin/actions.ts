@@ -4,7 +4,17 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/auth";
 import { requireAdmin } from "@/lib/cms/admin";
-import { deleteMedia, listMedia, listSiteImages, saveUpload, updateMediaAlt, type Media } from "@/lib/cms/media";
+import {
+  deleteMedia,
+  listMedia,
+  listSiteImages,
+  removeSiteImage,
+  replaceImage,
+  restoreSiteImage,
+  saveUpload,
+  updateMediaAlt,
+  type Media,
+} from "@/lib/cms/media";
 import { isCmsPage } from "@/lib/cms/pages";
 import {
   deleteProduct,
@@ -30,8 +40,8 @@ export async function adminLogin(_: { error?: string }, fd: FormData): Promise<{
   const a = attempts.get(email);
   if (a && a.reset > Date.now() && a.n >= 6) return { error: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo." };
 
-  const user = db.prepare("SELECT id, password_hash, role FROM users WHERE email = ?").get(email) as
-    | { id: number; password_hash: string; role: string }
+  const user = db.prepare("SELECT id, password_hash, role, disabled FROM users WHERE email = ?").get(email) as
+    | { id: number; password_hash: string; role: string; disabled: number }
     | undefined;
   // Se verifica siempre (aunque el correo no exista) para no revelar qué correos están registrados.
   const ok = user ? await verifyPassword(password, user.password_hash) : false;
@@ -40,6 +50,7 @@ export async function adminLogin(_: { error?: string }, fd: FormData): Promise<{
     else a.n++;
     return { error: "Correo o contraseña incorrectos, o la cuenta no es de administrador." };
   }
+  if (user.disabled) return { error: "Esta cuenta está suspendida. Pide a otro administrador que la reactive." };
   attempts.delete(email);
   await createSession(user.id);
   redirect("/admin");
@@ -148,6 +159,35 @@ export async function deleteMediaAction(id: number): Promise<ActionResult> {
   revalidatePath("/admin/medios");
   if (!r.ok) return { ok: false, error: `Esta imagen se está usando (${r.usedIn.join(", ")}). Cámbiala allí antes de eliminarla.` };
   return { ok: true, message: "Imagen eliminada" };
+}
+
+/** Reemplaza una imagen por otra en todos los lugares donde se usa (queda en el historial). */
+export async function replaceImageAction(from: string, to: string): Promise<ActionResult> {
+  const user = await requireAdmin();
+  try {
+    const n = replaceImage(from, to, user.id);
+    refreshSite();
+    refreshProducts();
+    revalidatePath("/admin/medios");
+    return { ok: true, message: n ? `Imagen reemplazada en ${n} ${n === 1 ? "lugar" : "lugares"}` : "La imagen no se usaba en ninguna parte" };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo reemplazar la imagen." };
+  }
+}
+
+/** Quita de la biblioteca una imagen de la web que no se usa (se puede restaurar). */
+export async function hideSiteImageAction(url: string): Promise<ActionResult> {
+  await requireAdmin();
+  const r = removeSiteImage(url);
+  revalidatePath("/admin/medios");
+  return r.ok ? { ok: true, message: "Imagen quitada de la biblioteca" } : r;
+}
+
+export async function restoreSiteImageAction(url: string): Promise<ActionResult> {
+  await requireAdmin();
+  restoreSiteImage(url);
+  revalidatePath("/admin/medios");
+  return { ok: true, message: "Imagen restaurada" };
 }
 
 export async function updateMediaAltAction(id: number, alt: string): Promise<ActionResult> {

@@ -6,15 +6,14 @@ import ProductCatalog from "@/components/sections/ProductCatalog";
 import ProductsHeader from "@/components/sections/ProductsHeader";
 import JsonLd from "@/components/seo/JsonLd";
 import { getProducts } from "@/lib/cms/products";
-import { getSettings } from "@/lib/cms/settings";
 import { getPageContent } from "@/lib/cms/store";
 import type { Product } from "@/lib/products";
-import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { breadcrumbs } from "@/lib/seo";
+import { seoMetadata } from "@/lib/cms/seo";
 import { SITE } from "@/lib/site";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getSettings();
-  return pageMetadata({ title: seo.productosTitle, description: seo.productosDescription, path: "/productos" });
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("productos");
 }
 
 /** Catálogo para Google: cada producto como servicio ofrecido por la empresa. */

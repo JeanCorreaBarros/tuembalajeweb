@@ -1,5 +1,6 @@
 import { IMAGES } from "@/lib/images";
 import { HIGHLIGHT_HELP, page, section, type Field, type PageValues, type ScalarField } from "./schema";
+import { SEO_LIMITS } from "./seo-score";
 
 /*
  * Contenido editable desde el panel (/admin/paginas). Los "defaults" son los textos actuales:
@@ -8,15 +9,20 @@ import { HIGHLIGHT_HELP, page, section, type Field, type PageValues, type Scalar
  */
 
 const ICON_LABEL: ScalarField[] = [
-  { key: "icon", label: "Ícono", type: "icon" },
-  { key: "label", label: "Texto", type: "textarea", rows: 2 },
+  { key: "icon", label: "Ícono", type: "icon", half: true },
+  { key: "label", label: "Texto", type: "textarea", rows: 2, half: true, help: "Enter = salto de línea." },
 ];
+
+/* Bloques en los que se ordena cada formulario del panel. */
+const T = "Textos";
+const B = "Botones";
+const IMG = "Imagen";
 
 /* ======================= AJUSTES GENERALES ======================= */
 
 export const AJUSTES = page({
   title: "Ajustes generales",
-  description: "Datos de contacto, redes, pie de página y textos para Google.",
+  description: "Datos de contacto, redes, empresa y pie de página. Lo que cambies aquí se actualiza en toda la web.",
   sections: {
     contacto: section({
       title: "Datos de contacto",
@@ -26,19 +32,25 @@ export const AJUSTES = page({
           key: "whatsapp",
           label: "WhatsApp de ventas",
           type: "text",
+          group: "WhatsApp y redes",
+          half: true,
+          placeholder: "573225982715",
           help: "Solo números, con indicativo de país. Ej: 573225982715",
         },
+        { key: "instagramHandle", label: "Usuario de Instagram", type: "text", group: "WhatsApp y redes", half: true, help: "Ej: @tuembalaje.sas" },
+        { key: "instagramUrl", label: "Enlace de Instagram", type: "text", group: "WhatsApp y redes", placeholder: "https://www.instagram.com/…" },
         {
           key: "phones",
           label: "Teléfonos",
           type: "list",
           itemLabel: "Teléfono",
+          group: "Teléfonos y correos",
           min: 1,
           max: 5,
           help: "El primero es el principal (se muestra en contacto y en los documentos legales).",
           fields: [
-            { key: "display", label: "Como se muestra", type: "text", help: "Ej: +57 322 598 2715" },
-            { key: "tel", label: "Para llamar", type: "text", help: "Sin espacios. Ej: +573225982715" },
+            { key: "display", label: "Como se muestra", type: "text", half: true, help: "Ej: +57 322 598 2715" },
+            { key: "tel", label: "Para llamar", type: "text", half: true, help: "Sin espacios. Ej: +573225982715" },
           ],
         },
         {
@@ -46,15 +58,14 @@ export const AJUSTES = page({
           label: "Correos",
           type: "list",
           itemLabel: "Correo",
+          group: "Teléfonos y correos",
           min: 1,
           max: 5,
           help: "El primero es el principal.",
           fields: [{ key: "email", label: "Correo", type: "text" }],
         },
-        { key: "location", label: "Ubicación", type: "text" },
-        { key: "schedule", label: "Horario de atención", type: "text" },
-        { key: "instagramHandle", label: "Usuario de Instagram", type: "text", help: "Ej: @tuembalaje.sas" },
-        { key: "instagramUrl", label: "Enlace de Instagram", type: "text" },
+        { key: "location", label: "Ubicación", type: "text", group: "Ubicación y horario", half: true },
+        { key: "schedule", label: "Horario de atención", type: "text", group: "Ubicación y horario", half: true },
       ],
       defaults: {
         whatsapp: "573225982715",
@@ -74,10 +85,10 @@ export const AJUSTES = page({
       title: "Datos legales de la empresa",
       description: "Aparecen en la política de privacidad y en los términos y condiciones.",
       fields: [
-        { key: "legalName", label: "Razón social", type: "text" },
-        { key: "nit", label: "NIT", type: "text", help: "Si lo dejas vacío no se muestra." },
-        { key: "address", label: "Dirección de la sede", type: "text", help: "Si la dejas vacía se muestra la ubicación." },
-        { key: "legalUpdated", label: "Fecha de actualización de los documentos legales", type: "text" },
+        { key: "legalName", label: "Razón social", type: "text", half: true },
+        { key: "nit", label: "NIT", type: "text", half: true, help: "Si lo dejas vacío no se muestra." },
+        { key: "address", label: "Dirección de la sede", type: "text", half: true, help: "Si la dejas vacía se muestra la ubicación." },
+        { key: "legalUpdated", label: "Actualización de los documentos legales", type: "text", half: true, help: "Ej: 13 de octubre de 2026" },
       ],
       defaults: {
         legalName: "Tu Embalaje SAS",
@@ -97,39 +108,184 @@ export const AJUSTES = page({
         tagline: "Calidad · Sostenibilidad · Confianza",
       },
     }),
-    seo: section({
-      title: "Google y redes (SEO)",
-      description:
-        "Título y descripción que muestra Google y la vista previa al compartir. Títulos de 50–60 caracteres y descripciones de 140–160.",
+  },
+});
+
+/* ======================= SEO ======================= */
+
+/** Páginas públicas con SEO editable: su ruta y nombre en el panel. */
+export const SEO_PAGES = {
+  inicio: { label: "Inicio", path: "/" },
+  productos: { label: "Productos", path: "/productos" },
+  nosotros: { label: "Nosotros", path: "/nosotros" },
+  contacto: { label: "Contacto", path: "/contacto" },
+  cotizador: { label: "Cotizador", path: "/cotizador" },
+  foro: { label: "Foro", path: "/foro" },
+  privacidad: { label: "Política de privacidad", path: "/politica-de-privacidad" },
+  terminos: { label: "Términos y condiciones", path: "/terminos-y-condiciones" },
+} as const;
+export type SeoPageId = keyof typeof SEO_PAGES;
+
+function seoPage(id: SeoPageId, d: { keyword: string; title: string; description: string }) {
+  const { label, path } = SEO_PAGES[id];
+  return section({
+    title: label,
+    description: path,
+    fields: [
+      {
+        key: "keyword",
+        label: "Palabra clave principal",
+        type: "text",
+        group: "Google",
+        placeholder: "Ej: cajas de madera",
+        help: "Lo que la gente escribe en Google y por lo que quieres que te encuentren. Úsala en el título y en la descripción.",
+      },
+      {
+        key: "title",
+        label: "Título para Google",
+        type: "text",
+        group: "Google",
+        min: SEO_LIMITS.title[0],
+        max: SEO_LIMITS.title[1],
+        help:
+          id === "inicio"
+            ? "Se muestra tal cual (incluye tu marca). Es el texto azul del resultado de Google y el nombre de la pestaña."
+            : "Es el texto azul del resultado de Google. El final de marca (Ajustes de SEO) se agrega solo.",
+      },
+      {
+        key: "description",
+        label: "Meta descripción",
+        type: "textarea",
+        rows: 3,
+        group: "Google",
+        min: SEO_LIMITS.description[0],
+        max: SEO_LIMITS.description[1],
+        help: "El texto gris bajo el título en Google y en la vista previa de WhatsApp o Facebook. Invita a hacer clic.",
+      },
+      {
+        key: "image",
+        label: "Imagen al compartir (opcional)",
+        type: "image",
+        group: "Redes sociales",
+        help: "La que aparece al compartir el enlace en WhatsApp, Facebook o LinkedIn. Ideal 1200 × 630 px. Vacía = la imagen general.",
+      },
+      {
+        key: "noindex",
+        label: "Ocultar esta página de Google",
+        type: "toggle",
+        group: "Avanzado",
+        help: "Actívalo solo si no quieres que esta página aparezca en los buscadores. La página sigue funcionando normalmente.",
+      },
+    ],
+    defaults: { ...d, image: "", noindex: false },
+  });
+}
+
+export const SEO = page({
+  title: "SEO · Google y redes",
+  description: "Cómo aparece cada página en Google y al compartir el enlace en WhatsApp o redes sociales.",
+  sections: {
+    general: section({
+      title: "Ajustes globales",
+      description: "Valores que se aplican a todo el sitio.",
       fields: [
-        { key: "homeTitle", label: "Inicio · título", type: "text", max: 70 },
-        { key: "homeDescription", label: "Inicio · descripción", type: "textarea", rows: 2, max: 170 },
-        { key: "productosTitle", label: "Productos · título", type: "text", max: 70 },
-        { key: "productosDescription", label: "Productos · descripción", type: "textarea", rows: 2, max: 170 },
-        { key: "nosotrosTitle", label: "Nosotros · título", type: "text", max: 70 },
-        { key: "nosotrosDescription", label: "Nosotros · descripción", type: "textarea", rows: 2, max: 170 },
-        { key: "contactoTitle", label: "Contacto · título", type: "text", max: 70 },
-        { key: "contactoDescription", label: "Contacto · descripción", type: "textarea", rows: 2, max: 170 },
-        { key: "cotizadorTitle", label: "Cotizador · título", type: "text", max: 70 },
-        { key: "cotizadorDescription", label: "Cotizador · descripción", type: "textarea", rows: 2, max: 170 },
+        {
+          key: "suffix",
+          label: "Final de marca en los títulos",
+          type: "text",
+          group: "Títulos",
+          placeholder: "| Tu Embalaje",
+          help: "Se agrega al final del título de cada página (menos Inicio). Déjalo vacío para no agregar nada.",
+        },
+        {
+          key: "keywords",
+          label: "Palabras clave del sitio",
+          type: "textarea",
+          rows: 3,
+          group: "Títulos",
+          help: "Separadas por comas. Describen de qué trata tu web.",
+        },
+        {
+          key: "shareImage",
+          label: "Imagen general al compartir",
+          type: "image",
+          group: "Redes sociales",
+          help: "Vacía = la imagen de marca automática (logo con fondo verde). Ideal 1200 × 630 px.",
+        },
+        {
+          key: "googleVerification",
+          label: "Código de Google Search Console",
+          type: "text",
+          group: "Verificación de buscadores",
+          half: true,
+          placeholder: "Ej: abc123XYZ…",
+          help: "Solo el valor de content=\"…\" de la etiqueta HTML que te da Google.",
+        },
+        {
+          key: "bingVerification",
+          label: "Código de Bing Webmaster",
+          type: "text",
+          group: "Verificación de buscadores",
+          half: true,
+          help: "Opcional. El valor de la etiqueta msvalidate.01.",
+        },
       ],
       defaults: {
-        homeTitle: "Tu Embalaje | Embalajes en madera a tu medida",
-        homeDescription:
-          "Diseñamos y fabricamos embalajes en madera a tu medida: cajas, estibas, pallets y huacales con madera reforestada certificada NIMF 15, aptos para exportación. Envíos a toda Colombia.",
-        productosTitle: "Cajas de madera, estibas y pallets a la medida",
-        productosDescription:
-          "Cajas de madera, estibas, pallets, huacales y embalajes especiales a la medida. Madera reforestada con certificación NIMF 15, apta para exportación.",
-        nosotrosTitle: "Nosotros: fabricantes de embalajes en madera",
-        nosotrosDescription:
-          "Conoce a Tu Embalaje: diseñamos y fabricamos embalajes en madera a la medida, con madera certificada NIMF 15, servicio personalizado y compromiso ambiental.",
-        contactoTitle: "Contacto y cotizaciones",
-        contactoDescription:
-          "Solicita tu asesoría gratis y cotiza cajas de madera, estibas, pallets y embalajes especiales a tu medida. Escríbenos por WhatsApp o llámanos.",
-        cotizadorTitle: "Cotizador de estibas de madera",
-        cotizadorDescription:
-          "Cotiza tu estiba de madera en línea: ingresa medidas, tipo (listones o tacos) y ensamble, y recibe gratis una propuesta a medida en menos de 24 horas.",
+        suffix: "| Tu Embalaje",
+        keywords:
+          "embalajes en madera, cajas de madera, estibas de madera, pallets de madera, huacales, estibas NIMF 15, embalaje para exportación, embalajes a la medida, Colombia",
+        shareImage: "",
+        googleVerification: "",
+        bingVerification: "",
       },
+    }),
+    inicio: seoPage("inicio", {
+      keyword: "embalajes en madera",
+      title: "Tu Embalaje | Embalajes en madera a tu medida",
+      description:
+        "Diseñamos y fabricamos embalajes en madera a tu medida: cajas, estibas, pallets y huacales certificados NIMF 15, aptos para exportación. Envíos a toda Colombia.",
+    }),
+    productos: seoPage("productos", {
+      keyword: "cajas de madera",
+      title: "Cajas de madera, estibas y pallets a la medida",
+      description:
+        "Cajas de madera, estibas, pallets, huacales y embalajes especiales a la medida. Madera reforestada con certificación NIMF 15, apta para exportación.",
+    }),
+    nosotros: seoPage("nosotros", {
+      keyword: "embalajes en madera",
+      title: "Nosotros: fabricantes de embalajes en madera",
+      description:
+        "Conoce a Tu Embalaje: diseñamos y fabricamos embalajes en madera a la medida, con madera certificada NIMF 15, servicio personalizado y compromiso ambiental.",
+    }),
+    contacto: seoPage("contacto", {
+      keyword: "cajas de madera",
+      title: "Contacto: cotiza cajas de madera y estibas",
+      description:
+        "Solicita tu asesoría gratis y cotiza cajas de madera, estibas, pallets y embalajes especiales a tu medida. Escríbenos por WhatsApp o llámanos.",
+    }),
+    cotizador: seoPage("cotizador", {
+      keyword: "estibas de madera",
+      title: "Cotizador de estibas de madera",
+      description:
+        "Cotizador de estibas de madera en línea: ingresa medidas, tipo (listones o tacos) y ensamble, y recibe gratis una propuesta a medida en menos de 24 horas.",
+    }),
+    foro: seoPage("foro", {
+      keyword: "embalajes en madera",
+      title: "Foro de preguntas sobre embalajes en madera",
+      description:
+        "Pregunta y resuelve dudas sobre embalajes en madera: cajas, estibas, exportación y NIMF 15, con la comunidad y el equipo de Tu Embalaje.",
+    }),
+    privacidad: seoPage("privacidad", {
+      keyword: "política de privacidad",
+      title: "Política de privacidad y tratamiento de datos",
+      description:
+        "Política de privacidad de Tu Embalaje: cómo recolectamos, usamos y protegemos tus datos personales según la Ley 1581 de 2012 y cómo ejercer tus derechos.",
+    }),
+    terminos: seoPage("terminos", {
+      keyword: "términos y condiciones",
+      title: "Términos y condiciones de uso",
+      description:
+        "Términos y condiciones para usar el sitio web de Tu Embalaje: cotizaciones, pedidos, uso del foro, propiedad intelectual y responsabilidad.",
     }),
   },
 });
@@ -143,16 +299,16 @@ export const INICIO = page({
     hero: section({
       title: "Encabezado principal",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título (línea blanca)", type: "text" },
-        { key: "highlight", label: "Título (línea verde)", type: "text" },
-        { key: "text", label: "Texto", type: "textarea", rows: 3 },
-        { key: "features", label: "Características", type: "list", itemLabel: "Característica", max: 6, fields: ICON_LABEL },
-        { key: "cta", label: "Botón principal (WhatsApp)", type: "text" },
-        { key: "cta2", label: "Botón secundario", type: "text" },
-        { key: "script", label: "Frase manuscrita (escritorio)", type: "text" },
-        { key: "image", label: "Imagen de fondo", type: "image" },
-        { key: "imageAlt", label: "Descripción de la imagen", type: "text", help: "Para Google y lectores de pantalla." },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T },
+        { key: "title", label: "Título (línea blanca)", type: "text", group: T, half: true },
+        { key: "highlight", label: "Título (línea verde)", type: "text", group: T, half: true },
+        { key: "text", label: "Texto", type: "textarea", rows: 3, group: T },
+        { key: "script", label: "Frase manuscrita (escritorio)", type: "text", group: T },
+        { key: "cta", label: "Botón principal (WhatsApp)", type: "text", group: B, half: true },
+        { key: "cta2", label: "Botón secundario", type: "text", group: B, half: true },
+        { key: "features", label: "Características", type: "list", itemLabel: "Característica", max: 6, group: "Características", fields: ICON_LABEL },
+        { key: "image", label: "Imagen de fondo", type: "image", group: IMG },
+        { key: "imageAlt", label: "Descripción de la imagen", type: "text", group: IMG, help: "Para Google y lectores de pantalla." },
       ],
       defaults: {
         eyebrow: "Diseñamos y fabricamos",
@@ -183,10 +339,10 @@ export const INICIO = page({
           itemLabel: "Cifra",
           max: 6,
           fields: [
-            { key: "icon", label: "Ícono", type: "icon" },
-            { key: "value", label: "Valor", type: "number", step: 0.01 },
-            { key: "decimals", label: "Decimales a mostrar", type: "number", min: 0 },
-            { key: "label", label: "Descripción", type: "text" },
+            { key: "icon", label: "Ícono", type: "icon", half: true },
+            { key: "label", label: "Descripción", type: "text", half: true },
+            { key: "value", label: "Valor", type: "number", step: 0.01, half: true },
+            { key: "decimals", label: "Decimales a mostrar", type: "number", min: 0, half: true },
           ],
         },
       ],
@@ -204,14 +360,14 @@ export const INICIO = page({
       title: "Sobre nosotros",
       description: "Esta sección también aparece en la página Nosotros.",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título (1.ª línea)", type: "text" },
-        { key: "title2", label: "Título (2.ª línea)", type: "text" },
-        { key: "text", label: "Texto", type: "textarea", rows: 5 },
-        { key: "button", label: "Botón", type: "text" },
-        { key: "image", label: "Foto", type: "image" },
-        { key: "imageAlt", label: "Descripción de la foto", type: "text" },
-        { key: "points", label: "Puntos destacados", type: "list", itemLabel: "Punto", max: 6, fields: ICON_LABEL },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T, half: true },
+        { key: "button", label: "Botón", type: "text", group: T, half: true },
+        { key: "title", label: "Título (1.ª línea)", type: "text", group: T, half: true },
+        { key: "title2", label: "Título (2.ª línea)", type: "text", group: T, half: true },
+        { key: "text", label: "Texto", type: "textarea", rows: 5, group: T },
+        { key: "points", label: "Puntos destacados", type: "list", itemLabel: "Punto", max: 6, group: "Puntos destacados", fields: ICON_LABEL },
+        { key: "image", label: "Foto", type: "image", group: IMG },
+        { key: "imageAlt", label: "Descripción de la foto", type: "text", group: IMG, help: "Para Google y lectores de pantalla." },
       ],
       defaults: {
         eyebrow: "Sobre nosotros",
@@ -233,10 +389,10 @@ export const INICIO = page({
       title: "Productos destacados",
       description: "Los productos que aparecen aquí se eligen en Productos (marca «Destacado»).",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título", type: "textarea", rows: 2 },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", half: true },
+        { key: "button", label: "Botón", type: "text", half: true },
+        { key: "title", label: "Título", type: "textarea", rows: 2, help: "Enter = salto de línea." },
         { key: "text", label: "Texto", type: "textarea", rows: 3 },
-        { key: "button", label: "Botón", type: "text" },
       ],
       defaults: {
         eyebrow: "Nuestros productos y servicios",
@@ -248,23 +404,24 @@ export const INICIO = page({
     proceso: section({
       title: "Nuestro proceso",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título", type: "textarea", rows: 2 },
-        { key: "text", label: "Texto", type: "textarea", rows: 3 },
-        { key: "button", label: "Botón", type: "text" },
-        { key: "image", label: "Imagen de fondo", type: "image" },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T, half: true },
+        { key: "button", label: "Botón", type: "text", group: T, half: true },
+        { key: "title", label: "Título", type: "textarea", rows: 2, group: T, help: "Enter = salto de línea." },
+        { key: "text", label: "Texto", type: "textarea", rows: 3, group: T },
         {
           key: "steps",
           label: "Pasos",
           type: "list",
           itemLabel: "Paso",
           max: 6,
+          group: "Pasos",
           fields: [
-            { key: "icon", label: "Ícono", type: "icon" },
-            { key: "title", label: "Título", type: "text" },
+            { key: "icon", label: "Ícono", type: "icon", half: true },
+            { key: "title", label: "Título", type: "text", half: true },
             { key: "desc", label: "Descripción", type: "textarea", rows: 2 },
           ],
         },
+        { key: "image", label: "Imagen de fondo", type: "image", group: IMG },
       ],
       defaults: {
         eyebrow: "Nuestro proceso",
@@ -283,12 +440,12 @@ export const INICIO = page({
     compromiso: section({
       title: "Nuestro compromiso",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título", type: "textarea", rows: 2 },
-        { key: "text", label: "Texto", type: "textarea", rows: 3 },
-        { key: "badges", label: "Insignias", type: "list", itemLabel: "Insignia", max: 4, fields: ICON_LABEL },
-        { key: "brush", label: "Frase de la pincelada", type: "textarea", rows: 3, help: "Una línea por renglón." },
-        { key: "image", label: "Imagen de fondo", type: "image" },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T },
+        { key: "title", label: "Título", type: "textarea", rows: 2, group: T, half: true, help: "Enter = salto de línea." },
+        { key: "brush", label: "Frase de la pincelada", type: "textarea", rows: 3, group: T, half: true, help: "Una línea por renglón." },
+        { key: "text", label: "Texto", type: "textarea", rows: 3, group: T },
+        { key: "badges", label: "Insignias", type: "list", itemLabel: "Insignia", max: 4, group: "Insignias", fields: ICON_LABEL },
+        { key: "image", label: "Imagen de fondo", type: "image", group: IMG },
       ],
       defaults: {
         eyebrow: "Nuestro compromiso",
@@ -306,14 +463,14 @@ export const INICIO = page({
     sectores: section({
       title: "Sectores que atendemos",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título", type: "text" },
-        { key: "text", label: "Texto", type: "textarea", rows: 3 },
-        { key: "button", label: "Botón", type: "text" },
-        { key: "sectors", label: "Sectores", type: "list", itemLabel: "Sector", max: 9, fields: ICON_LABEL },
-        { key: "image1", label: "Foto 1 (izquierda)", type: "image" },
-        { key: "image2", label: "Foto 2 (centro)", type: "image" },
-        { key: "image3", label: "Foto 3 (derecha)", type: "image" },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T, half: true },
+        { key: "button", label: "Botón", type: "text", group: T, half: true },
+        { key: "title", label: "Título", type: "text", group: T },
+        { key: "text", label: "Texto", type: "textarea", rows: 3, group: T },
+        { key: "sectors", label: "Sectores", type: "list", itemLabel: "Sector", max: 9, group: "Sectores", fields: ICON_LABEL },
+        { key: "image1", label: "Foto 1 (izquierda)", type: "image", group: "Fotos" },
+        { key: "image2", label: "Foto 2 (centro)", type: "image", group: "Fotos" },
+        { key: "image3", label: "Foto 3 (derecha)", type: "image", group: "Fotos" },
       ],
       defaults: {
         eyebrow: "Sectores que atendemos",
@@ -336,9 +493,8 @@ export const INICIO = page({
     testimonios: section({
       title: "Testimonios",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título", type: "textarea", rows: 2 },
-        { key: "image", label: "Imagen de fondo", type: "image" },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T },
+        { key: "title", label: "Título", type: "textarea", rows: 2, group: T },
         {
           key: "items",
           label: "Testimonios",
@@ -346,12 +502,14 @@ export const INICIO = page({
           itemLabel: "Testimonio",
           min: 1,
           max: 10,
+          group: "Testimonios",
           fields: [
             { key: "quote", label: "Testimonio", type: "textarea", rows: 3 },
-            { key: "name", label: "Nombre", type: "text" },
-            { key: "role", label: "Cargo y empresa", type: "text" },
+            { key: "name", label: "Nombre", type: "text", half: true },
+            { key: "role", label: "Cargo y empresa", type: "text", half: true },
           ],
         },
+        { key: "image", label: "Imagen de fondo", type: "image", group: IMG },
       ],
       defaults: {
         eyebrow: "Lo que dicen nuestros clientes",
@@ -381,10 +539,10 @@ export const INICIO = page({
       title: "Franja final (llamado a la acción)",
       description: "Aparece al final de Inicio, Nosotros y Productos.",
       fields: [
-        { key: "title", label: "Título", type: "textarea", rows: 2 },
-        { key: "text", label: "Texto", type: "text" },
-        { key: "button", label: "Botón (WhatsApp)", type: "text" },
-        { key: "image", label: "Imagen de fondo", type: "image" },
+        { key: "title", label: "Título", type: "textarea", rows: 2, group: T, help: "Enter = salto de línea." },
+        { key: "text", label: "Texto", type: "text", group: T, half: true },
+        { key: "button", label: "Botón (WhatsApp)", type: "text", group: T, half: true },
+        { key: "image", label: "Imagen de fondo", type: "image", group: IMG },
       ],
       defaults: {
         title: "¿Listo para proteger tus productos\ncon la mejor solución en madera?",
@@ -419,18 +577,19 @@ export const NOSOTROS = page({
     valores: section({
       title: "Misión, visión y valores",
       fields: [
-        { key: "mision", label: "Misión", type: "textarea", rows: 4 },
-        { key: "vision", label: "Visión", type: "textarea", rows: 4 },
-        { key: "eyebrow", label: "Título de los valores", type: "text" },
+        { key: "mision", label: "Misión", type: "textarea", rows: 5, group: "Misión y visión", half: true },
+        { key: "vision", label: "Visión", type: "textarea", rows: 5, group: "Misión y visión", half: true },
+        { key: "eyebrow", label: "Título de los valores", type: "text", group: "Valores" },
         {
           key: "values",
           label: "Valores",
           type: "list",
           itemLabel: "Valor",
           max: 8,
+          group: "Valores",
           fields: [
-            { key: "icon", label: "Ícono", type: "icon" },
-            { key: "title", label: "Título", type: "text" },
+            { key: "icon", label: "Ícono", type: "icon", half: true },
+            { key: "title", label: "Título", type: "text", half: true },
             { key: "text", label: "Descripción", type: "textarea", rows: 2 },
           ],
         },
@@ -485,18 +644,19 @@ export const CONTACTO = page({
     encabezado: section({
       title: "Encabezado",
       fields: [
-        { key: "title", label: "Título", type: "text", help: HIGHLIGHT_HELP },
-        { key: "text", label: "Texto", type: "textarea", rows: 2 },
+        { key: "title", label: "Título", type: "text", group: T, help: HIGHLIGHT_HELP },
+        { key: "text", label: "Texto", type: "textarea", rows: 2, group: T, half: true },
+        { key: "script", label: "Frase manuscrita (escritorio)", type: "textarea", rows: 2, group: T, half: true },
         {
           key: "checks",
           label: "Ventajas (con visto bueno)",
           type: "list",
           itemLabel: "Ventaja",
           max: 5,
+          group: "Ventajas",
           fields: [{ key: "label", label: "Texto", type: "text" }],
         },
-        { key: "script", label: "Frase manuscrita (escritorio)", type: "textarea", rows: 2 },
-        { key: "image", label: "Foto de fondo (opcional)", type: "image", help: "Se muestra a la derecha, sobre el fondo verde." },
+        { key: "image", label: "Foto de fondo (opcional)", type: "image", group: IMG, help: "Se muestra a la derecha, sobre el fondo verde." },
       ],
       defaults: {
         image: "",
@@ -510,8 +670,8 @@ export const CONTACTO = page({
       title: "Formulario",
       fields: [
         { key: "title", label: "Título", type: "text", help: HIGHLIGHT_HELP },
-        { key: "subtitle", label: "Subtítulo", type: "text" },
-        { key: "button", label: "Botón", type: "text" },
+        { key: "subtitle", label: "Subtítulo", type: "text", half: true },
+        { key: "button", label: "Botón", type: "text", half: true },
       ],
       defaults: {
         title: "Solicita tu asesoría *GRATIS*",
@@ -522,14 +682,14 @@ export const CONTACTO = page({
     tarjetas: section({
       title: "Tarjetas de contacto",
       fields: [
-        { key: "phoneSub", label: "Teléfono · texto", type: "text" },
-        { key: "emailSub", label: "Correo · texto", type: "text" },
-        { key: "locationSub", label: "Ubicación · texto", type: "text" },
-        { key: "scheduleSub", label: "Horario · texto", type: "text" },
-        { key: "whatsappTitle", label: "Tarjeta de WhatsApp · título", type: "text" },
-        { key: "whatsappSub", label: "Tarjeta de WhatsApp · texto", type: "text" },
-        { key: "trust", label: "Garantías (bajo el formulario)", type: "list", itemLabel: "Garantía", max: 4, fields: ICON_LABEL },
-        { key: "script", label: "Frase manuscrita", type: "text" },
+        { key: "phoneSub", label: "Teléfono · texto", type: "text", group: "Tarjetas", half: true },
+        { key: "emailSub", label: "Correo · texto", type: "text", group: "Tarjetas", half: true },
+        { key: "locationSub", label: "Ubicación · texto", type: "text", group: "Tarjetas", half: true },
+        { key: "scheduleSub", label: "Horario · texto", type: "text", group: "Tarjetas", half: true },
+        { key: "whatsappTitle", label: "Título", type: "text", group: "Tarjeta de WhatsApp", half: true },
+        { key: "whatsappSub", label: "Texto", type: "text", group: "Tarjeta de WhatsApp", half: true },
+        { key: "trust", label: "Garantías (bajo el formulario)", type: "list", itemLabel: "Garantía", max: 4, group: "Garantías", fields: ICON_LABEL },
+        { key: "script", label: "Frase manuscrita", type: "text", group: "Garantías" },
       ],
       defaults: {
         phoneSub: "Llámanos o escríbenos por WhatsApp",
@@ -558,10 +718,10 @@ export const COTIZADOR = page({
     encabezado: section({
       title: "Encabezado",
       fields: [
-        { key: "eyebrow", label: "Texto pequeño superior", type: "text" },
-        { key: "title", label: "Título", type: "text", help: HIGHLIGHT_HELP },
-        { key: "text", label: "Texto", type: "textarea", rows: 3 },
-        { key: "perks", label: "Ventajas (bajo el cotizador)", type: "list", itemLabel: "Ventaja", max: 4, fields: ICON_LABEL },
+        { key: "eyebrow", label: "Texto pequeño superior", type: "text", group: T, half: true },
+        { key: "title", label: "Título", type: "text", group: T, half: true, help: HIGHLIGHT_HELP },
+        { key: "text", label: "Texto", type: "textarea", rows: 3, group: T },
+        { key: "perks", label: "Ventajas (bajo el cotizador)", type: "list", itemLabel: "Ventaja", max: 4, group: "Ventajas", fields: ICON_LABEL },
       ],
       defaults: {
         eyebrow: "Cotizador de estibas",
@@ -578,24 +738,24 @@ export const COTIZADOR = page({
       title: "Medidas estándar (cm)",
       description: "Fuera de este rango, el cotizador muestra el mensaje de diseño especial.",
       fields: [
-        { key: "largoMin", label: "Largo mínimo", type: "number", min: 1 },
-        { key: "largoMax", label: "Largo máximo", type: "number", min: 1 },
-        { key: "anchoMin", label: "Ancho mínimo", type: "number", min: 1 },
-        { key: "anchoMax", label: "Ancho máximo", type: "number", min: 1 },
+        { key: "largoMin", label: "Largo mínimo", type: "number", min: 1, group: "Largo", half: true },
+        { key: "largoMax", label: "Largo máximo", type: "number", min: 1, group: "Largo", half: true },
+        { key: "anchoMin", label: "Ancho mínimo", type: "number", min: 1, group: "Ancho", half: true },
+        { key: "anchoMax", label: "Ancho máximo", type: "number", min: 1, group: "Ancho", half: true },
       ],
       defaults: { largoMin: 50, largoMax: 150, anchoMin: 50, anchoMax: 150 },
     }),
     precios: section({
       title: "Precios de referencia (COP)",
       fields: [
-        { key: "puntillasListonesMin", label: "Puntillas · Listones · desde", type: "number", min: 0 },
-        { key: "puntillasListonesMax", label: "Puntillas · Listones · hasta", type: "number", min: 0 },
-        { key: "puntillasTacosMin", label: "Puntillas · Tacos · desde", type: "number", min: 0 },
-        { key: "puntillasTacosMax", label: "Puntillas · Tacos · hasta", type: "number", min: 0 },
-        { key: "tornillosListonesMin", label: "Puntillas y tornillos · Listones · desde", type: "number", min: 0 },
-        { key: "tornillosListonesMax", label: "Puntillas y tornillos · Listones · hasta", type: "number", min: 0 },
-        { key: "tornillosTacosMin", label: "Puntillas y tornillos · Tacos · desde", type: "number", min: 0 },
-        { key: "tornillosTacosMax", label: "Puntillas y tornillos · Tacos · hasta", type: "number", min: 0 },
+        { key: "puntillasListonesMin", label: "Listones · desde", type: "number", min: 0, group: "Ensamble con puntillas", half: true },
+        { key: "puntillasListonesMax", label: "Listones · hasta", type: "number", min: 0, group: "Ensamble con puntillas", half: true },
+        { key: "puntillasTacosMin", label: "Tacos · desde", type: "number", min: 0, group: "Ensamble con puntillas", half: true },
+        { key: "puntillasTacosMax", label: "Tacos · hasta", type: "number", min: 0, group: "Ensamble con puntillas", half: true },
+        { key: "tornillosListonesMin", label: "Listones · desde", type: "number", min: 0, group: "Ensamble con puntillas y tornillos", half: true },
+        { key: "tornillosListonesMax", label: "Listones · hasta", type: "number", min: 0, group: "Ensamble con puntillas y tornillos", half: true },
+        { key: "tornillosTacosMin", label: "Tacos · desde", type: "number", min: 0, group: "Ensamble con puntillas y tornillos", half: true },
+        { key: "tornillosTacosMax", label: "Tacos · hasta", type: "number", min: 0, group: "Ensamble con puntillas y tornillos", half: true },
       ],
       defaults: {
         puntillasListonesMin: 28000,
@@ -611,11 +771,11 @@ export const COTIZADOR = page({
     mensajes: section({
       title: "Mensajes y botón",
       fields: [
-        { key: "dentroTitulo", label: "Dentro del rango · título", type: "textarea", rows: 2 },
-        { key: "dentroTexto", label: "Dentro del rango · texto", type: "textarea", rows: 3 },
-        { key: "fueraTitulo", label: "Fuera del rango · título", type: "textarea", rows: 2 },
-        { key: "fueraTexto", label: "Fuera del rango · texto", type: "textarea", rows: 3 },
-        { key: "cta", label: "Texto del botón", type: "text" },
+        { key: "dentroTitulo", label: "Título", type: "textarea", rows: 2, group: "Medidas dentro del rango estándar", half: true },
+        { key: "dentroTexto", label: "Texto", type: "textarea", rows: 4, group: "Medidas dentro del rango estándar", half: true },
+        { key: "fueraTitulo", label: "Título", type: "textarea", rows: 2, group: "Medidas fuera del rango (diseño especial)", half: true },
+        { key: "fueraTexto", label: "Texto", type: "textarea", rows: 4, group: "Medidas fuera del rango (diseño especial)", half: true },
+        { key: "cta", label: "Texto del botón", type: "text", group: B },
       ],
       defaults: {
         dentroTitulo: "Este rango es el punto de partida. Tu embalaje puede ser a la medida.",
@@ -642,6 +802,7 @@ const legalSections: Field = {
   itemLabel: "Sección",
   min: 1,
   max: 30,
+  group: "Secciones del documento",
   help: LEGAL_HELP,
   fields: [
     { key: "title", label: "Título", type: "text" },
@@ -656,8 +817,8 @@ export const PRIVACIDAD = page({
     documento: section({
       title: "Documento",
       fields: [
-        { key: "title", label: "Título", type: "text" },
-        { key: "intro", label: "Introducción", type: "textarea", rows: 3 },
+        { key: "title", label: "Título", type: "text", group: "Encabezado" },
+        { key: "intro", label: "Introducción", type: "textarea", rows: 3, group: "Encabezado" },
         legalSections,
       ],
       defaults: {
@@ -730,8 +891,8 @@ export const TERMINOS = page({
     documento: section({
       title: "Documento",
       fields: [
-        { key: "title", label: "Título", type: "text" },
-        { key: "intro", label: "Introducción", type: "textarea", rows: 3 },
+        { key: "title", label: "Título", type: "text", group: "Encabezado" },
+        { key: "intro", label: "Introducción", type: "textarea", rows: 3, group: "Encabezado" },
         legalSections,
       ],
       defaults: {
@@ -804,9 +965,13 @@ export const CMS_PAGES = {
   privacidad: PRIVACIDAD,
   terminos: TERMINOS,
   ajustes: AJUSTES,
+  seo: SEO,
 } as const;
 
 export type CmsPageId = keyof typeof CMS_PAGES;
 export type CmsValues<K extends CmsPageId> = PageValues<(typeof CMS_PAGES)[K]>;
 
 export const isCmsPage = (id: string): id is CmsPageId => id in CMS_PAGES;
+
+/** Páginas con pantalla propia en el panel (no aparecen en la lista de «Páginas»). */
+export const SPECIAL_PAGES: CmsPageId[] = ["ajustes", "seo"];

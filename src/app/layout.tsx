@@ -6,8 +6,10 @@ import MotionProvider from "@/components/ui/MotionProvider";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import { SettingsProvider } from "@/components/cms/SettingsProvider";
 import { getProducts } from "@/lib/cms/products";
+import { getSeoGeneral } from "@/lib/cms/seo";
 import { getSettings, type Settings } from "@/lib/cms/settings";
 import type { Product } from "@/lib/products";
+import { DEFAULT_SHARE_IMAGE } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -38,26 +40,36 @@ const hand = Caveat({
 
 const title = "Tu Embalaje | Embalajes en madera a tu medida";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE.url),
-  title: { default: title, template: "%s | Tu Embalaje" },
-  description: SITE.description,
-  keywords: SITE.keywords,
-  applicationName: SITE.name,
-  authors: [{ name: SITE.legalName, url: SITE.url }],
-  creator: SITE.legalName,
-  publisher: SITE.legalName,
-  category: "business",
-  formatDetection: { telephone: false, email: false, address: false },
-  // La URL canónica va en cada página (pageMetadata): aquí se heredaría a todas como "/".
-  openGraph: { type: "website", locale: "es_CO", siteName: SITE.name, title, description: SITE.description },
-  twitter: { card: "summary_large_image", title, description: SITE.description },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
-  },
-};
+/** Metadatos comunes. Palabras clave, final de marca, imagen y verificación de buscadores se editan en /admin/seo. */
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeoGeneral();
+  const keywords = seo.keywords.split(",").map((k) => k.trim()).filter(Boolean);
+  const images = [seo.shareImage ? { url: seo.shareImage, alt: title } : DEFAULT_SHARE_IMAGE];
+  return {
+    metadataBase: new URL(SITE.url),
+    title: { default: title, template: seo.suffix.trim() ? `%s ${seo.suffix.trim()}` : "%s" },
+    description: seo.homeDescription,
+    keywords: keywords.length ? keywords : SITE.keywords,
+    applicationName: SITE.name,
+    authors: [{ name: SITE.legalName, url: SITE.url }],
+    creator: SITE.legalName,
+    publisher: SITE.legalName,
+    category: "business",
+    formatDetection: { telephone: false, email: false, address: false },
+    // La URL canónica va en cada página (pageMetadata): aquí se heredaría a todas como "/".
+    openGraph: { type: "website", locale: "es_CO", siteName: SITE.name, title, description: seo.homeDescription, images },
+    twitter: { card: "summary_large_image", title, description: seo.homeDescription, images },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+    },
+    verification: {
+      ...(seo.googleVerification.trim() ? { google: seo.googleVerification.trim() } : {}),
+      ...(seo.bingVerification.trim() ? { other: { "msvalidate.01": seo.bingVerification.trim() } } : {}),
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#062a1c",
@@ -65,7 +77,7 @@ export const viewport: Viewport = {
 };
 
 /** Datos de la empresa para Google (panel de negocio, logo, contacto, catálogo), desde lo editable en /admin. */
-function organization(settings: Settings, products: Product[]) {
+function organization(settings: Settings, products: Product[], description: string) {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -76,8 +88,8 @@ function organization(settings: Settings, products: Product[]) {
         legalName: settings.legalName,
         url: SITE.url,
         logo: `${SITE.url}/logo/tu-embalaje-color.png`,
-        image: `${SITE.url}/opengraph-image`,
-        description: settings.seo.homeDescription,
+        image: `${SITE.url}/og`,
+        description,
         email: settings.email,
         telephone: settings.phoneTel,
         address: { "@type": "PostalAddress", addressCountry: "CO", ...(settings.address ? { streetAddress: settings.address } : {}) },
@@ -112,11 +124,11 @@ function organization(settings: Settings, products: Product[]) {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [settings, products] = await Promise.all([getSettings(), getProducts()]);
+  const [settings, products, seo] = await Promise.all([getSettings(), getProducts(), getSeoGeneral()]);
   return (
     <html lang="es-CO" className={`${montserrat.variable} ${script.variable} ${hand.variable} antialiased`}>
       <body className="min-h-screen overflow-x-hidden">
-        <JsonLd data={organization(settings, products)} />
+        <JsonLd data={organization(settings, products, seo.homeDescription)} />
         <Suspense fallback={null}>
           <ScrollToTop />
         </Suspense>

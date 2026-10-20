@@ -7,14 +7,13 @@ import PageHeader from "@/components/sections/PageHeader";
 import JsonLd from "@/components/seo/JsonLd";
 import Watermark from "@/components/ui/Watermark";
 import { iconFor } from "@/lib/cms/icons";
-import { getSettings } from "@/lib/cms/settings";
 import { getPageContent } from "@/lib/cms/store";
 import { cotizadorConfig } from "@/lib/cotizador";
-import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { seoMetadata } from "@/lib/cms/seo";
+import { breadcrumbs } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getSettings();
-  return pageMetadata({ title: seo.cotizadorTitle, description: seo.cotizadorDescription, path: "/cotizador" });
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("cotizador");
 }
 
 /** Cotizador: textos, medidas, precios y mensajes en /admin (Páginas · Cotizador). */

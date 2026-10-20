@@ -12,13 +12,12 @@ import Stats from "@/components/sections/Stats";
 import Testimonials from "@/components/sections/Testimonials";
 import Values from "@/components/sections/Values";
 import JsonLd from "@/components/seo/JsonLd";
-import { getSettings } from "@/lib/cms/settings";
 import { getPageContent } from "@/lib/cms/store";
-import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { seoMetadata } from "@/lib/cms/seo";
+import { breadcrumbs } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getSettings();
-  return pageMetadata({ title: seo.nosotrosTitle, description: seo.nosotrosDescription, path: "/nosotros" });
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("nosotros");
 }
 
 /** Nosotros: encabezado y valores en /admin (Páginas · Nosotros); el resto se comparte con Inicio. */

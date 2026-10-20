@@ -71,8 +71,8 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
 
   if (tooManyAttempts(email)) return { error: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo." };
 
-  const user = db.prepare("SELECT id, password_hash FROM users WHERE email = ?").get(email) as
-    | { id: number; password_hash: string }
+  const user = db.prepare("SELECT id, password_hash, disabled FROM users WHERE email = ?").get(email) as
+    | { id: number; password_hash: string; disabled: number }
     | undefined;
   // Se verifica siempre, para no revelar si el correo existe.
   const ok = user ? await verifyPassword(password, user.password_hash) : false;
@@ -80,6 +80,7 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
     failAttempt(email);
     return { error: "Correo o contraseña incorrectos." };
   }
+  if (user.disabled) return { error: "Esta cuenta está suspendida. Escríbenos si crees que es un error." };
 
   await createSession(user.id);
   redirect(safeNext(str(fd, "next")));

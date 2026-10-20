@@ -43,6 +43,7 @@ export async function createSession(userId: number) {
     userId,
     expires,
   );
+  db.prepare("UPDATE users SET last_login = ? WHERE id = ?").run(Date.now(), userId);
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
@@ -59,7 +60,18 @@ export async function destroySession() {
   jar.delete(COOKIE);
 }
 
-/** Usuario actual o null. Lee cookies, así que debe usarse dentro de <Suspense>. */
+/** Cierra todas las sesiones del usuario menos la actual. Devuelve cuántas cerró. */
+export async function destroyOtherSessions(userId: number) {
+  const token = (await cookies()).get(COOKIE)?.value;
+  return db.prepare("DELETE FROM sessions WHERE user_id = ? AND token_hash != ?").run(userId, token ? sha256(token) : "").changes;
+}
+
+/** Cierra todas las sesiones de un usuario (al suspenderlo o cambiarle la contraseña). */
+export function destroyAllSessions(userId: number) {
+  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+}
+
+/** Usuario actual o null (las cuentas suspendidas no tienen sesión). Lee cookies: úsalo dentro de <Suspense>. */
 export async function getCurrentUser(): Promise<User | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
@@ -67,7 +79,7 @@ export async function getCurrentUser(): Promise<User | null> {
     .prepare(
       `SELECT u.id, u.name, u.email, u.role
          FROM sessions s JOIN users u ON u.id = s.user_id
-        WHERE s.token_hash = ? AND s.expires_at > ?`,
+        WHERE s.token_hash = ? AND s.expires_at > ? AND u.disabled = 0`,
     )
     .get(sha256(token), Date.now()) as User | undefined;
   return row ?? null;

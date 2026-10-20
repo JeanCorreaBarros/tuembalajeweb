@@ -13,11 +13,11 @@ import { iconFor } from "@/lib/cms/icons";
 import { getProducts } from "@/lib/cms/products";
 import { getSettings } from "@/lib/cms/settings";
 import { getPageContent } from "@/lib/cms/store";
-import { breadcrumbs, pageMetadata } from "@/lib/seo";
+import { seoMetadata } from "@/lib/cms/seo";
+import { breadcrumbs } from "@/lib/seo";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { seo } = await getSettings();
-  return pageMetadata({ title: seo.contactoTitle, description: seo.contactoDescription, path: "/contacto" });
+export function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("contacto");
 }
 
 /** Contacto: textos en /admin (Páginas · Contacto); teléfonos, correos y horario en Ajustes generales. */

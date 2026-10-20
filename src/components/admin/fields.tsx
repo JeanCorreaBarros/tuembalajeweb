@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ChevronDown, ImageOff, Plus, RefreshCw, Trash2 } fr
 import { createElement, useState } from "react";
 import { ICONS, iconFor } from "@/lib/cms/icons";
 import type { Field, ListField, ScalarField } from "@/lib/cms/schema";
+import { useConfirm } from "./ConfirmDialog";
 import MediaPicker from "./MediaPicker";
 
 type Obj = Record<string, unknown>;
@@ -12,17 +13,30 @@ export const inputCls =
   "w-full rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-ink/35 focus:border-brand focus:ring-4 focus:ring-brand/15 sm:text-[14px]";
 
 function Label({ field, htmlFor, count }: { field: Field; htmlFor?: string; count?: number }) {
-  const max = "max" in field && field.type !== "list" ? field.max : undefined;
+  const max = (field.type === "text" || field.type === "textarea") && field.max ? field.max : undefined;
+  const min = (field.type === "text" || field.type === "textarea") && field.min ? field.min : undefined;
+  let counter = null;
+  if (max && count !== undefined) {
+    // Con mínimo y máximo (SEO): verde dentro del rango ideal, ámbar fuera.
+    const inRange = count <= max && (!min || count >= min);
+    counter = (
+      <span
+        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
+          min ? (inRange ? "bg-brand/10 text-brand-dark" : count === 0 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700") : count > max ? "font-bold text-amber-600" : "text-ink/40"
+        }`}
+        title={min ? `Ideal: entre ${min} y ${max} caracteres` : `Máximo recomendado: ${max}`}
+      >
+        {count}
+        {min ? ` · ideal ${min}–${max}` : `/${max}`}
+      </span>
+    );
+  }
   return (
     <div className="mb-1.5 flex items-end justify-between gap-3">
       <label htmlFor={htmlFor} className="text-[13px] font-bold text-forest-dark">
         {field.label}
       </label>
-      {max && count !== undefined && (
-        <span className={`text-[11px] ${count > max ? "font-bold text-amber-600" : "text-ink/40"}`}>
-          {count}/{max}
-        </span>
-      )}
+      {counter}
     </div>
   );
 }
@@ -139,6 +153,27 @@ export function ScalarInput({
   const str = typeof value === "string" ? value : value == null ? "" : String(value);
   let control;
   switch (field.type) {
+    case "toggle": {
+      const on = value === true;
+      return (
+        <label htmlFor={id} className="flex cursor-pointer items-start gap-3.5 rounded-2xl bg-mist/60 px-4 py-3.5 ring-1 ring-black/5">
+          <button
+            id={id}
+            type="button"
+            role="switch"
+            aria-checked={on}
+            onClick={() => onChange(!on)}
+            className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition ${on ? "bg-brand" : "bg-ink/20"}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+          </button>
+          <span className="min-w-0">
+            <span className="block text-[13px] font-bold text-forest-dark">{field.label}</span>
+            {field.help && <span className="mt-0.5 block text-[12px] leading-snug text-ink/50">{field.help}</span>}
+          </span>
+        </label>
+      );
+    }
     case "textarea":
     case "richtext":
       control = (
@@ -146,6 +181,7 @@ export function ScalarInput({
           id={id}
           value={str}
           rows={field.rows ?? (field.type === "richtext" ? 8 : 3)}
+          placeholder={field.placeholder}
           onChange={(e) => onChange(e.target.value)}
           className={`${inputCls} resize-y leading-relaxed ${field.type === "richtext" ? "font-mono text-[13px]" : ""}`}
         />
@@ -161,7 +197,7 @@ export function ScalarInput({
           min={field.min}
           value={str}
           onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
-          className={`${inputCls} max-w-[220px]`}
+          className={inputCls}
         />
       );
       break;
@@ -172,7 +208,9 @@ export function ScalarInput({
       control = <IconInput value={str} onChange={onChange} />;
       break;
     default:
-      control = <input id={id} type="text" value={str} onChange={(e) => onChange(e.target.value)} className={inputCls} />;
+      control = (
+        <input id={id} type="text" value={str} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} className={inputCls} />
+      );
   }
   return (
     <div>
@@ -188,6 +226,7 @@ export function ScalarInput({
 function ListInput({ field, value, onChange, id }: { field: ListField; value: unknown; onChange: (v: unknown) => void; id: string }) {
   const items = Array.isArray(value) ? (value as Obj[]) : [];
   const set = (next: Obj[]) => onChange(next);
+  const confirmDlg = useConfirm();
   const empty = () => Object.fromEntries(field.fields.map((f) => [f.key, f.type === "number" ? 0 : f.type === "icon" ? "leaf" : ""]));
   const canAdd = items.length < (field.max ?? 50);
   const canRemove = items.length > (field.min ?? 0);
@@ -240,8 +279,15 @@ function ListInput({ field, value, onChange, id }: { field: ListField; value: un
                     type="button"
                     aria-label="Eliminar"
                     disabled={!canRemove}
-                    onClick={() => {
-                      if (confirm(`¿Eliminar ${field.itemLabel.toLowerCase()} ${i + 1}?`)) set(items.filter((_, k) => k !== i));
+                    onClick={async () => {
+                      const ok = await confirmDlg({
+                        tone: "warning",
+                        title: `¿Quitar ${field.itemLabel.toLowerCase()} ${i + 1}?`,
+                        message: "Se quitará de la lista. El cambio se aplica en la web cuando pulses «Publicar cambios»; antes puedes usar «Descartar».",
+                        details: [summary(it)],
+                        confirmLabel: "Quitar",
+                      });
+                      if (ok) set(items.filter((_, k) => k !== i));
                     }}
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-ink/50 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
                   >
@@ -249,15 +295,16 @@ function ListInput({ field, value, onChange, id }: { field: ListField; value: un
                   </button>
                 </span>
               </summary>
-              <div className="grid grid-cols-1 gap-4 border-t border-black/5 p-3.5">
+              <div className="grid grid-cols-1 gap-4 border-t border-black/5 bg-white/60 p-3.5 sm:grid-cols-2 sm:p-4">
                 {field.fields.map((sf) => (
-                  <ScalarInput
-                    key={sf.key}
-                    id={`${id}-${i}-${sf.key}`}
-                    field={sf}
-                    value={it[sf.key]}
-                    onChange={(v) => set(items.map((x, k) => (k === i ? { ...x, [sf.key]: v } : x)))}
-                  />
+                  <div key={sf.key} className={`min-w-0 ${sf.half ? "" : "sm:col-span-2"}`}>
+                    <ScalarInput
+                      id={`${id}-${i}-${sf.key}`}
+                      field={sf}
+                      value={it[sf.key]}
+                      onChange={(v) => set(items.map((x, k) => (k === i ? { ...x, [sf.key]: v } : x)))}
+                    />
+                  </div>
                 ))}
               </div>
             </details>
@@ -280,4 +327,59 @@ function ListInput({ field, value, onChange, id }: { field: ListField; value: un
 export function FieldInput({ field, value, onChange, id, defaults }: { field: Field; value: unknown; onChange: (v: unknown) => void; id: string; defaults?: Obj }) {
   if (field.type === "list") return <ListInput field={field} value={value} onChange={onChange} id={id} />;
   return <ScalarInput field={field} value={value} onChange={onChange} id={id} optionalImage={field.type === "image" && defaults?.[field.key] === ""} />;
+}
+
+/**
+ * Formulario de una sección ordenado en bloques (según `group` de cada campo) y en dos columnas
+ * en escritorio: los campos `half` van lado a lado; textos largos, listas e imágenes ocupan todo el ancho.
+ */
+export function FieldGroups({
+  fields,
+  values,
+  defaults,
+  idPrefix,
+  onChange,
+}: {
+  fields: Field[];
+  values: Obj;
+  defaults: Obj;
+  idPrefix: string;
+  onChange: (key: string, v: unknown) => void;
+}) {
+  const groups: { name: string; fields: Field[] }[] = [];
+  for (const f of fields) {
+    const name = f.group ?? "";
+    const g = groups.find((x) => x.name === name);
+    if (g) g.fields.push(f);
+    else groups.push({ name, fields: [f] });
+  }
+  const titled = groups.length > 1 || groups[0]?.name !== "";
+
+  return (
+    <div className="divide-y divide-black/5">
+      {groups.map((g, gi) => (
+        <fieldset key={g.name || gi} className="min-w-0 px-5 py-5 sm:px-6">
+          {titled && (
+            <legend className="float-left mb-4 flex w-full items-center gap-2.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-brand-dark">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />
+              {g.name || "Contenido"}
+            </legend>
+          )}
+          <div className="clear-both grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2">
+            {g.fields.map((f) => (
+              <div key={f.key} className={`min-w-0 ${f.half && f.type !== "list" && f.type !== "image" ? "" : "sm:col-span-2"}`}>
+                <FieldInput
+                  id={`${idPrefix}-${f.key}`}
+                  field={f}
+                  value={values[f.key]}
+                  defaults={defaults}
+                  onChange={(v) => onChange(f.key, v)}
+                />
+              </div>
+            ))}
+          </div>
+        </fieldset>
+      ))}
+    </div>
+  );
 }

@@ -8,5 +8,5 @@ export const metadata = { title: "Ajustes generales" };
 
 export default async function AjustesPage() {
   await connection();
-  return <PageEditorView pageId="ajustes" />;
+  return <PageEditorView pageId="ajustes" help="/admin/ayuda#ajustes" />;
 }

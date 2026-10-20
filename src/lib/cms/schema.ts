@@ -4,14 +4,25 @@
  * actuales de la web, que se usan mientras la sección no se haya editado).
  */
 
-type Base = { key: string; label: string; help?: string };
+type Base = {
+  key: string;
+  label: string;
+  help?: string;
+  /** Media columna en escritorio (dos campos cortos lado a lado). */
+  half?: boolean;
+  /** Bloque del formulario donde se muestra ("Textos", "Botones", "Imagen"…). */
+  group?: string;
+  placeholder?: string;
+};
 
 export type ScalarField =
-  | (Base & { type: "text"; max?: number })
-  | (Base & { type: "textarea"; rows?: number; max?: number })
+  | (Base & { type: "text"; max?: number; min?: number })
+  | (Base & { type: "textarea"; rows?: number; max?: number; min?: number })
   | (Base & { type: "image" })
   | (Base & { type: "icon" })
   | (Base & { type: "number"; step?: number; min?: number })
+  /** Interruptor sí / no. */
+  | (Base & { type: "toggle" })
   /** Texto con formato simple: párrafos, "- " para viñetas y **negrita**. */
   | (Base & { type: "richtext"; rows?: number });
 

@@ -113,9 +113,11 @@ export default function MediaPicker({
       listMediaAction().then((r) => {
         setUploads(r.uploads);
         setSite(r.site);
+        // Sin fotos subidas (o si la actual es de la web), abre directo en las imágenes de la web.
+        if (!r.uploads.length || current?.startsWith("/images/")) setTab("web");
       });
     } else if (!open && d.open) d.close();
-  }, [open]);
+  }, [open, current]);
 
   const items = tab === "subidas" ? (uploads ?? []).map((m) => ({ url: m.url, label: m.original_name })) : site.map((url) => ({ url, label: url.split("/").pop() ?? url }));
 

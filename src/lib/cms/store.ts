@@ -29,6 +29,8 @@ function cleanScalar(f: ScalarField, v: unknown, fallback: unknown): unknown {
       return isImagePath(v) ? v : fallback;
     case "icon":
       return typeof v === "string" && v in ICONS ? v : fallback;
+    case "toggle":
+      return typeof v === "boolean" ? v : fallback;
     default: {
       if (typeof v !== "string") return fallback;
       const max = "max" in f && f.max ? Math.max(f.max, 1) : MAX_TEXT;
@@ -66,6 +68,35 @@ function cleanSection(fields: Field[], stored: unknown, defaults: Obj): Obj {
   }
   return out;
 }
+
+/*
+ * Migración única: antes el SEO vivía en Ajustes generales (clave "ajustes.seo", con campos
+ * homeTitle, productosDescription…). Ahora cada página tiene su sección en "seo.<página>".
+ * Si hay datos con el formato viejo, se copian (sin pisar nada ya guardado) y se borra la clave vieja.
+ */
+function migrateLegacySeo() {
+  try {
+    const row = db.prepare("SELECT value, updated_at, updated_by FROM cms_content WHERE key = 'ajustes.seo'").get() as
+      | { value: string; updated_at: number; updated_by: number | null }
+      | undefined;
+    if (!row) return;
+    const old = JSON.parse(row.value) as Record<string, unknown>;
+    const pages = { inicio: "home", productos: "productos", nosotros: "nosotros", contacto: "contacto", cotizador: "cotizador" };
+    const insert = db.prepare("INSERT OR IGNORE INTO cms_content (key, value, updated_at, updated_by) VALUES (?, ?, ?, ?)");
+    db.transaction(() => {
+      for (const [id, prefix] of Object.entries(pages)) {
+        const title = old[`${prefix}Title`];
+        const description = old[`${prefix}Description`];
+        if (typeof title !== "string" && typeof description !== "string") continue;
+        insert.run(`seo.${id}`, JSON.stringify({ title, description }), row.updated_at, row.updated_by);
+      }
+      db.prepare("DELETE FROM cms_content WHERE key = 'ajustes.seo'").run();
+    })();
+  } catch {
+    // Si algo falla, la web sigue con los textos por defecto del SEO.
+  }
+}
+migrateLegacySeo();
 
 /* ---------- lectura (en caché) ---------- */
 

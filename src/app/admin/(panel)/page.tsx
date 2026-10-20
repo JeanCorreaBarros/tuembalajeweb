@@ -1,9 +1,11 @@
-import { FileText, History, Image as ImageIcon, Package, Settings, type LucideIcon } from "lucide-react";
+import { BookOpen, FileText, History, Image as ImageIcon, Package, Search, type LucideIcon } from "lucide-react";
 import { connection } from "next/server";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminShell";
 import { getCurrentUser } from "@/lib/auth";
-import { CMS_PAGES } from "@/lib/cms/pages";
+import { CMS_PAGES, SEO_PAGES, SPECIAL_PAGES, type SeoPageId } from "@/lib/cms/pages";
+import { fullSeoTitle, seoChecks, seoScore, type SeoValues } from "@/lib/cms/seo-score";
+import { readPageContent } from "@/lib/cms/store";
 import { readProducts } from "@/lib/cms/products";
 import { db } from "@/lib/db";
 
@@ -42,13 +44,19 @@ export default async function Escritorio() {
         ORDER BY r.created_at DESC, r.id DESC LIMIT 6`,
     )
     .all() as { label: string; created_at: number; user: string | null }[];
-  const pageCount = Object.keys(CMS_PAGES).length - 1;
+  const pageCount = Object.keys(CMS_PAGES).length - SPECIAL_PAGES.length;
+  const seo = readPageContent("seo") as unknown as Record<string, SeoValues> & { general: { suffix: string } };
+  const seoIds = Object.keys(SEO_PAGES) as SeoPageId[];
+  const seoAvg = Math.round(
+    seoIds.reduce((sum, id) => sum + seoScore(seoChecks(seo[id], fullSeoTitle(id === "inicio", seo[id].title, seo.general.suffix))).score, 0) / seoIds.length,
+  );
 
   return (
     <>
       <AdminHeader
         title={`¡Hola, ${user?.name.split(" ")[0] ?? ""}!`}
         description="Desde aquí editas los textos, imágenes y productos de la web. Los cambios se publican al guardar."
+        help="/admin/ayuda#inicio"
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -61,7 +69,7 @@ export default async function Escritorio() {
           text={`${products.filter((p) => p.featured).length} destacados`}
         />
         <Card href="/admin/medios" icon={ImageIcon} title="Imágenes subidas" value={String(media)} text="Biblioteca de medios" />
-        <Card href="/admin/ajustes" icon={Settings} title="Ajustes" value="⚙" text="Contacto, WhatsApp y SEO" />
+        <Card href="/admin/seo" icon={Search} title="SEO · Google" value={`${seoAvg}/100`} text={`Puntaje promedio de ${seoIds.length} páginas`} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -101,6 +109,7 @@ export default async function Escritorio() {
                 ["/admin/paginas/cotizador#precios", "Precios del cotizador"],
                 ["/admin/ajustes#contacto", "WhatsApp y teléfonos"],
                 ["/admin/productos/nuevo", "Crear un producto"],
+                ["/admin/seo#inicio", "Cómo aparece el inicio en Google"],
               ] as const
             ).map(([href, label]) => (
               <li key={href}>
@@ -110,6 +119,16 @@ export default async function Escritorio() {
               </li>
             ))}
           </ul>
+          <Link
+            href="/admin/ayuda"
+            className="mt-4 flex items-center gap-3 rounded-2xl bg-white/10 p-3.5 transition hover:bg-white/15"
+          >
+            <BookOpen className="h-5 w-5 shrink-0 text-lime" aria-hidden />
+            <span className="min-w-0">
+              <span className="block text-[13px] font-bold">Guía de uso</span>
+              <span className="block text-[11px] text-white/60">Cómo funciona cada parte del panel</span>
+            </span>
+          </Link>
         </section>
       </div>
     </>

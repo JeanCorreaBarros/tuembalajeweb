@@ -1,6 +1,6 @@
 /**
  * Datos fijos del sitio. Los datos de contacto (WhatsApp, teléfonos, correos, horario…), la
- * empresa y los textos de SEO se editan en el panel: /admin → Ajustes generales.
+ * empresa se editan en /admin → Ajustes generales; el SEO, en /admin → SEO.
  */
 export const SITE = {
   name: "Tu Embalaje",
